@@ -1,0 +1,112 @@
+[
+  {
+    "id": "aud-1",
+    "timestamp": "2026-07-27T06:25:05.269Z",
+    "actor": "Priya Natarajan",
+    "actorRole": "security-engineer",
+    "action": "approval.granted",
+    "target": "run-1482 (production, security review)",
+    "targetType": "PipelineRun",
+    "outcome": "success",
+    "detail": "Security approval for payments-api v2.15.0-rc.2; SCA finding tracked with SLA."
+  },
+  {
+    "id": "aud-2",
+    "timestamp": "2026-07-27T02:25:05.269Z",
+    "actor": "Priya Natarajan",
+    "actorRole": "security-engineer",
+    "action": "approval.rejected",
+    "target": "run-2210 (staging)",
+    "targetType": "PipelineRun",
+    "outcome": "success",
+    "detail": "Rejected: critical CVE-2025-21614 with public exploit; no waiver."
+  },
+  {
+    "id": "aud-3",
+    "timestamp": "2026-07-27T00:25:05.269Z",
+    "actor": "SecureFlow gate",
+    "actorRole": "administrator",
+    "action": "gate.blocked",
+    "target": "run-2210 / image-scan",
+    "targetType": "PipelineStage",
+    "outcome": "success",
+    "detail": "Trivy gate blocked deployment on critical CVE."
+  },
+  {
+    "id": "aud-4",
+    "timestamp": "2026-07-26T21:25:05.269Z",
+    "actor": "Argo Rollouts",
+    "actorRole": "administrator",
+    "action": "deployment.rolled-back",
+    "target": "reporting-platform production",
+    "targetType": "Deployment",
+    "outcome": "success",
+    "detail": "Automated rollback v4.2.0 → v4.1.0 on SLO burn-rate breach (4.2x/10m)."
+  },
+  {
+    "id": "aud-5",
+    "timestamp": "2026-07-26T20:25:05.269Z",
+    "actor": "Tomás Herrera",
+    "actorRole": "developer",
+    "action": "deployment.approve",
+    "target": "run-1482 (production)",
+    "targetType": "PipelineRun",
+    "outcome": "denied",
+    "detail": "RBAC denied: role 'developer' lacks deployment.approve."
+  },
+  {
+    "id": "aud-6",
+    "timestamp": "2026-07-26T08:25:05.269Z",
+    "actor": "Elin Sørensen",
+    "actorRole": "release-approver",
+    "action": "deployment.promoted",
+    "target": "payments-api staging → production readiness",
+    "targetType": "Deployment",
+    "outcome": "success",
+    "detail": "Promoted v2.15.0-rc.2 to production approval queue."
+  },
+  {
+    "id": "aud-7",
+    "timestamp": "2026-07-26T03:37:05.269Z",
+    "actor": "Marcus Oyelaran",
+    "actorRole": "platform-engineer",
+    "action": "stage.retried",
+    "target": "run-0862 / checkov",
+    "targetType": "PipelineStage",
+    "outcome": "failure",
+    "detail": "Retry failed with identical CKV_AZURE_109 violation."
+  },
+  {
+    "id": "aud-8",
+    "timestamp": "2026-07-25T08:25:05.269Z",
+    "actor": "Derek Mensah",
+    "actorRole": "application-owner",
+    "action": "risk.accepted",
+    "target": "find-missing-encryption",
+    "targetType": "SecurityFinding",
+    "outcome": "success",
+    "detail": "REX-31 accepted for 45 days pending CMK platform rollout."
+  },
+  {
+    "id": "aud-9",
+    "timestamp": "2026-07-24T08:25:05.269Z",
+    "actor": "Aiko Tanaka",
+    "actorRole": "compliance-reviewer",
+    "action": "evidence.downloaded",
+    "target": "SOC 2 CC8.1 evidence package",
+    "targetType": "ComplianceEvidence",
+    "outcome": "success",
+    "detail": "Quarterly audit preparation export."
+  },
+  {
+    "id": "aud-10",
+    "timestamp": "2026-07-23T08:25:05.269Z",
+    "actor": "Priya Natarajan",
+    "actorRole": "security-engineer",
+    "action": "finding.status-changed",
+    "target": "find-sast-sqli → false-positive",
+    "targetType": "SecurityFinding",
+    "outcome": "success",
+    "detail": "Confirmed enum-mapped value; refactor tracked as REM-3098."
+  }
+]

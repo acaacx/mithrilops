@@ -5,12 +5,12 @@
 | Control | Where |
 |---|---|
 | Strict TypeScript, no `any` | eslint + tsconfig across workspaces |
-| Input validation with zod | approval/risk/generator forms (web), query/params (api) |
+| Input validation with zod (web) / Pydantic (api) | approval/risk/generator forms (web), query/params + fixture load (api) |
 | RBAC permission matrix gating privileged UI actions | `apps/web/src/lib/rbac.ts`, `useCan()` |
 | Audit logging of privileged operations **and RBAC denials** | `auditProvider.record` calls in every mutation |
-| Secure HTTP headers + CSP | `docker/nginx.conf` (SPA), `@fastify/helmet` (API) |
-| Rate limiting | `@fastify/rate-limit` (200 req/min default) |
-| CORS restricted to the SPA origin | `apps/api/src/server.ts` |
+| Secure HTTP headers + CSP | `docker/nginx.conf` (SPA), security-headers middleware in `apps/api/src/secureflow_api/main.py` (API) |
+| Rate limiting | extension point — edge/API gateway in production |
+| CORS restricted to the SPA origin | `apps/api/src/secureflow_api/main.py` |
 | No secrets in source control | `.env.example` placeholders only; gitleaks in CI |
 | Non-root containers, healthchecks | `docker/Dockerfile.*` |
 | CI: secret scan, dependency audit, Trivy, SBOM, Cosign signing, Checkov | `.github/workflows/ci.yml` |

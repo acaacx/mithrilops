@@ -25,7 +25,7 @@ Release approval authority · pipeline evidence & audit trail · scanner finding
 ## Information disclosure
 
 - Private endpoints for all data planes; `public_network_access_enabled = false` everywhere.
-- Logs: redaction requirement documented; Fastify logger must never receive request bodies of auth routes (enforced at the marked auth extension point).
+- Logs: redaction requirement documented; the API logger must never receive request bodies of auth routes (enforced at the marked auth extension point).
 - SPA CSP restricts `connect-src 'self'` — no third-party beacons.
 
 ## Denial of service

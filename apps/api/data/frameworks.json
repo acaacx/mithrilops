@@ -1,0 +1,425 @@
+[
+  {
+    "id": "owasp-top-10",
+    "name": "OWASP Top 10",
+    "version": "2021",
+    "coveragePercent": 90,
+    "controls": [
+      {
+        "id": "owasp-top-10-A01",
+        "frameworkId": "owasp-top-10",
+        "controlId": "A01",
+        "title": "Broken Access Control",
+        "description": "Enforce least privilege and deny-by-default authorization on every route and API.",
+        "status": "passed",
+        "evidenceIds": [
+          "ev-authz-tests"
+        ],
+        "relatedStageDefinitionId": "iam-review",
+        "relatedFindingIds": [],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "owasp-top-10-A02",
+        "frameworkId": "owasp-top-10",
+        "controlId": "A02",
+        "title": "Cryptographic Failures",
+        "description": "TLS everywhere, approved cipher suites, CMK for sensitive data at rest.",
+        "status": "passed",
+        "evidenceIds": [
+          "ev-tls-policy"
+        ],
+        "relatedFindingIds": [],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "owasp-top-10-A03",
+        "frameworkId": "owasp-top-10",
+        "controlId": "A03",
+        "title": "Injection",
+        "description": "Parameterized queries and taint analysis in SAST gate.",
+        "status": "passed",
+        "evidenceIds": [
+          "ev-sonar-gate"
+        ],
+        "relatedStageDefinitionId": "sast",
+        "relatedFindingIds": [
+          "find-sast-sqli"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "owasp-top-10-A06",
+        "frameworkId": "owasp-top-10",
+        "controlId": "A06",
+        "title": "Vulnerable and Outdated Components",
+        "description": "SCA and container scanning gates block critical CVEs.",
+        "status": "failed",
+        "evidenceIds": [],
+        "relatedStageDefinitionId": "sca",
+        "relatedFindingIds": [
+          "find-cve-portal",
+          "find-dep-axios"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "owasp-top-10-A07",
+        "frameworkId": "owasp-top-10",
+        "controlId": "A07",
+        "title": "Identification & Authentication Failures",
+        "description": "MFA, rate limiting, uniform auth responses.",
+        "status": "failed",
+        "evidenceIds": [],
+        "relatedStageDefinitionId": "dast",
+        "relatedFindingIds": [
+          "find-dast-auth",
+          "find-secret-notify"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      }
+    ]
+  },
+  {
+    "id": "cis-benchmarks",
+    "name": "CIS Benchmarks",
+    "version": "AKS 1.5 / Docker 1.7",
+    "coveragePercent": 82,
+    "controls": [
+      {
+        "id": "cis-benchmarks-5.2.6",
+        "frameworkId": "cis-benchmarks",
+        "controlId": "5.2.6",
+        "title": "Do not run containers as root",
+        "description": "Enforce runAsNonRoot via admission policy.",
+        "status": "failed",
+        "evidenceIds": [],
+        "relatedStageDefinitionId": "image-scan",
+        "relatedFindingIds": [
+          "find-root-container"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "cis-benchmarks-5.4.1",
+        "frameworkId": "cis-benchmarks",
+        "controlId": "5.4.1",
+        "title": "Resource limits on all workloads",
+        "description": "CPU/memory limits required by namespace LimitRange.",
+        "status": "needs-evidence",
+        "evidenceIds": [],
+        "relatedFindingIds": [
+          "find-missing-limits"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "cis-benchmarks-6.2",
+        "frameworkId": "cis-benchmarks",
+        "controlId": "6.2",
+        "title": "Restrict network ingress",
+        "description": "No 0.0.0.0/0 ingress except approved edge.",
+        "status": "failed",
+        "evidenceIds": [],
+        "relatedStageDefinitionId": "tfsec",
+        "relatedFindingIds": [
+          "find-sg-open"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      }
+    ]
+  },
+  {
+    "id": "nist-csf",
+    "name": "NIST Cybersecurity Framework",
+    "version": "2.0",
+    "coveragePercent": 78,
+    "controls": [
+      {
+        "id": "nist-csf-ID.AM-02",
+        "frameworkId": "nist-csf",
+        "controlId": "ID.AM-02",
+        "title": "Software inventories (SBOM)",
+        "description": "SBOM generated and stored for every shipped image.",
+        "status": "needs-evidence",
+        "evidenceIds": [],
+        "relatedStageDefinitionId": "sbom",
+        "relatedFindingIds": [
+          "find-missing-sbom"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "nist-csf-PR.PS-06",
+        "frameworkId": "nist-csf",
+        "controlId": "PR.PS-06",
+        "title": "Software integrity",
+        "description": "All images signed with Cosign; admission verifies signatures.",
+        "status": "passed",
+        "evidenceIds": [
+          "ev-cosign-policy"
+        ],
+        "relatedStageDefinitionId": "sign",
+        "relatedFindingIds": [
+          "find-unsigned-image"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "nist-csf-PR.AA-05",
+        "frameworkId": "nist-csf",
+        "controlId": "PR.AA-05",
+        "title": "Least-privilege access",
+        "description": "Scoped role assignments reviewed quarterly.",
+        "status": "failed",
+        "evidenceIds": [],
+        "relatedFindingIds": [
+          "find-iam-wide"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      }
+    ]
+  },
+  {
+    "id": "iso-27001",
+    "name": "ISO/IEC 27001",
+    "version": "2022",
+    "coveragePercent": 88,
+    "controls": [
+      {
+        "id": "iso-27001-A.8.24",
+        "frameworkId": "iso-27001",
+        "controlId": "A.8.24",
+        "title": "Use of cryptography",
+        "description": "Key management via Key Vault with rotation policies.",
+        "status": "exception",
+        "evidenceIds": [
+          "ev-rex-31"
+        ],
+        "relatedFindingIds": [
+          "find-missing-encryption"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "iso-27001-A.8.12",
+        "frameworkId": "iso-27001",
+        "controlId": "A.8.12",
+        "title": "Data leakage prevention",
+        "description": "No public data endpoints without DLP review.",
+        "status": "failed",
+        "evidenceIds": [],
+        "relatedFindingIds": [
+          "find-storage-public"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "iso-27001-A.8.2",
+        "frameworkId": "iso-27001",
+        "controlId": "A.8.2",
+        "title": "Privileged access rights",
+        "description": "Privileged roles time-bound and reviewed.",
+        "status": "needs-evidence",
+        "evidenceIds": [],
+        "relatedFindingIds": [
+          "find-iam-wide"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      }
+    ]
+  },
+  {
+    "id": "soc-2",
+    "name": "SOC 2",
+    "version": "Type II",
+    "coveragePercent": 92,
+    "controls": [
+      {
+        "id": "soc-2-CC6.1",
+        "frameworkId": "soc-2",
+        "controlId": "CC6.1",
+        "title": "Logical access controls",
+        "description": "Access provisioned via Entra groups; secrets never in code.",
+        "status": "failed",
+        "evidenceIds": [],
+        "relatedStageDefinitionId": "secret-scan",
+        "relatedFindingIds": [
+          "find-secret-notify"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "soc-2-CC6.6",
+        "frameworkId": "soc-2",
+        "controlId": "CC6.6",
+        "title": "Boundary protection",
+        "description": "Private endpoints for data stores; public access denied.",
+        "status": "failed",
+        "evidenceIds": [],
+        "relatedFindingIds": [
+          "find-storage-public"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "soc-2-CC8.1",
+        "frameworkId": "soc-2",
+        "controlId": "CC8.1",
+        "title": "Change management",
+        "description": "All production changes flow through approved pipelines with dual approval.",
+        "status": "passed",
+        "evidenceIds": [
+          "ev-approval-trail"
+        ],
+        "relatedStageDefinitionId": "prod-approval",
+        "relatedFindingIds": [],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      }
+    ]
+  },
+  {
+    "id": "pci-dss",
+    "name": "PCI DSS",
+    "version": "4.0.1",
+    "coveragePercent": 85,
+    "controls": [
+      {
+        "id": "pci-dss-6.3.3",
+        "frameworkId": "pci-dss",
+        "controlId": "6.3.3",
+        "title": "Patch critical vulnerabilities within one month",
+        "description": "Critical/high CVEs remediated inside SLA.",
+        "status": "failed",
+        "evidenceIds": [],
+        "relatedFindingIds": [
+          "find-cve-portal",
+          "find-dep-axios"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "pci-dss-8.3.4",
+        "frameworkId": "pci-dss",
+        "controlId": "8.3.4",
+        "title": "Limit repeated access attempts",
+        "description": "Lockout and throttling on all authentication flows.",
+        "status": "failed",
+        "evidenceIds": [],
+        "relatedFindingIds": [
+          "find-dast-auth"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "pci-dss-10.2",
+        "frameworkId": "pci-dss",
+        "controlId": "10.2",
+        "title": "Audit log integrity",
+        "description": "Immutable audit trail for privileged operations.",
+        "status": "passed",
+        "evidenceIds": [
+          "ev-audit-immutability"
+        ],
+        "relatedFindingIds": [],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      }
+    ]
+  },
+  {
+    "id": "azure-security-benchmark",
+    "name": "Azure Security Benchmark",
+    "version": "v3",
+    "coveragePercent": 87,
+    "controls": [
+      {
+        "id": "azure-security-benchmark-NS-2",
+        "frameworkId": "azure-security-benchmark",
+        "controlId": "NS-2",
+        "title": "Secure PaaS with private endpoints",
+        "description": "Key Vault, Postgres, Storage behind private endpoints.",
+        "status": "failed",
+        "evidenceIds": [],
+        "relatedStageDefinitionId": "checkov",
+        "relatedFindingIds": [
+          "find-kv-public",
+          "find-storage-public"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "azure-security-benchmark-PA-7",
+        "frameworkId": "azure-security-benchmark",
+        "controlId": "PA-7",
+        "title": "Just-enough administration",
+        "description": "Least-privilege scoped role assignments for automation.",
+        "status": "failed",
+        "evidenceIds": [],
+        "relatedFindingIds": [
+          "find-iam-wide"
+        ],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      },
+      {
+        "id": "azure-security-benchmark-PV-6",
+        "frameworkId": "azure-security-benchmark",
+        "controlId": "PV-6",
+        "title": "Rapid vulnerability remediation",
+        "description": "Container and dependency scanning gates with SLAs.",
+        "status": "passed",
+        "evidenceIds": [
+          "ev-trivy-gate"
+        ],
+        "relatedStageDefinitionId": "image-scan",
+        "relatedFindingIds": [],
+        "ownerUserId": "u-aiko",
+        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
+        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+      }
+    ]
+  }
+]

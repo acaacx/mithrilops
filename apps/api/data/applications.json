@@ -1,0 +1,266 @@
+[
+  {
+    "id": "app-payments",
+    "name": "Payments API",
+    "slug": "payments-api",
+    "description": "Core payment initiation and settlement API serving mobile and partner channels.",
+    "ownerUserId": "u-rowan",
+    "teamId": "team-payments",
+    "repositoryId": "repo-payments",
+    "technology": [
+      "TypeScript",
+      "Fastify",
+      "PostgreSQL",
+      "AKS"
+    ],
+    "cloudEnvironment": "Azure — AKS (private cluster)",
+    "currentVersion": "v2.14.3",
+    "deploymentStatus": "healthy",
+    "pipelineHealth": "healthy",
+    "securityScore": 84,
+    "complianceScore": 91,
+    "lastDeploymentAt": "2026-07-27T01:25:05.267Z",
+    "openVulnerabilities": {
+      "critical": 1,
+      "high": 2,
+      "medium": 5,
+      "low": 9
+    },
+    "availability": "99.97%",
+    "riskLevel": "high",
+    "slos": [
+      {
+        "metric": "availability",
+        "target": "99.95%",
+        "current": "99.97%",
+        "status": "met"
+      },
+      {
+        "metric": "latency-p95",
+        "target": "< 250ms",
+        "current": "212ms",
+        "status": "met"
+      },
+      {
+        "metric": "error-rate",
+        "target": "< 0.1%",
+        "current": "0.04%",
+        "status": "met"
+      }
+    ],
+    "argoAppName": "payments-api-prod",
+    "errorRate": "0.04%",
+    "latencyP95": "212ms"
+  },
+  {
+    "id": "app-portal",
+    "name": "Customer Portal",
+    "slug": "customer-portal",
+    "description": "Public web portal for account servicing, statements, and support.",
+    "ownerUserId": "u-tomas",
+    "teamId": "team-web",
+    "repositoryId": "repo-portal",
+    "technology": [
+      "TypeScript",
+      "React",
+      "Node.js",
+      "Container Apps"
+    ],
+    "cloudEnvironment": "Azure — Container Apps",
+    "currentVersion": "v5.8.0",
+    "deploymentStatus": "degraded",
+    "pipelineHealth": "failing",
+    "securityScore": 61,
+    "complianceScore": 74,
+    "lastDeploymentAt": "2026-07-26T02:25:05.267Z",
+    "openVulnerabilities": {
+      "critical": 2,
+      "high": 4,
+      "medium": 11,
+      "low": 14
+    },
+    "availability": "99.82%",
+    "riskLevel": "critical",
+    "slos": [
+      {
+        "metric": "availability",
+        "target": "99.9%",
+        "current": "99.82%",
+        "status": "breached"
+      },
+      {
+        "metric": "latency-p95",
+        "target": "< 400ms",
+        "current": "486ms",
+        "status": "at-risk"
+      },
+      {
+        "metric": "error-rate",
+        "target": "< 0.5%",
+        "current": "0.61%",
+        "status": "breached"
+      }
+    ],
+    "argoAppName": "customer-portal-prod",
+    "errorRate": "0.61%",
+    "latencyP95": "486ms"
+  },
+  {
+    "id": "app-identity",
+    "name": "Identity Service",
+    "slug": "identity-service",
+    "description": "OIDC token issuance, session management, and step-up authentication.",
+    "ownerUserId": "u-priya",
+    "teamId": "team-identity",
+    "repositoryId": "repo-identity",
+    "technology": [
+      "C#",
+      ".NET 9",
+      "AKS",
+      "Entra ID"
+    ],
+    "cloudEnvironment": "Azure — AKS (private cluster)",
+    "currentVersion": "v3.2.1",
+    "deploymentStatus": "healthy",
+    "pipelineHealth": "healthy",
+    "securityScore": 93,
+    "complianceScore": 96,
+    "lastDeploymentAt": "2026-07-25T04:25:05.267Z",
+    "openVulnerabilities": {
+      "critical": 0,
+      "high": 1,
+      "medium": 3,
+      "low": 6
+    },
+    "availability": "99.99%",
+    "riskLevel": "medium",
+    "slos": [
+      {
+        "metric": "availability",
+        "target": "99.99%",
+        "current": "99.99%",
+        "status": "met"
+      },
+      {
+        "metric": "latency-p95",
+        "target": "< 120ms",
+        "current": "88ms",
+        "status": "met"
+      },
+      {
+        "metric": "error-rate",
+        "target": "< 0.05%",
+        "current": "0.01%",
+        "status": "met"
+      }
+    ],
+    "argoAppName": "identity-service-prod",
+    "errorRate": "0.01%",
+    "latencyP95": "88ms"
+  },
+  {
+    "id": "app-notify",
+    "name": "Notification Worker",
+    "slug": "notification-worker",
+    "description": "Async worker for email, SMS, and push notifications via Service Bus.",
+    "ownerUserId": "u-derek",
+    "teamId": "team-messaging",
+    "repositoryId": "repo-notify",
+    "technology": [
+      "Go",
+      "Service Bus",
+      "Container Apps"
+    ],
+    "cloudEnvironment": "Azure — Container Apps",
+    "currentVersion": "v1.9.7",
+    "deploymentStatus": "progressing",
+    "pipelineHealth": "unstable",
+    "securityScore": 77,
+    "complianceScore": 82,
+    "lastDeploymentAt": "2026-07-27T06:25:05.267Z",
+    "openVulnerabilities": {
+      "critical": 0,
+      "high": 2,
+      "medium": 6,
+      "low": 4
+    },
+    "availability": "99.91%",
+    "riskLevel": "medium",
+    "slos": [
+      {
+        "metric": "availability",
+        "target": "99.9%",
+        "current": "99.91%",
+        "status": "met"
+      },
+      {
+        "metric": "latency-p95",
+        "target": "< 2s (delivery)",
+        "current": "1.4s",
+        "status": "met"
+      },
+      {
+        "metric": "error-rate",
+        "target": "< 0.3%",
+        "current": "0.22%",
+        "status": "at-risk"
+      }
+    ],
+    "argoAppName": "notification-worker-prod",
+    "errorRate": "0.22%",
+    "latencyP95": "1.4s"
+  },
+  {
+    "id": "app-reporting",
+    "name": "Reporting Platform",
+    "slug": "reporting-platform",
+    "description": "Regulatory and management reporting with nightly batch aggregation.",
+    "ownerUserId": "u-aiko",
+    "teamId": "team-data",
+    "repositoryId": "repo-reporting",
+    "technology": [
+      "Python",
+      "Spark",
+      "AKS",
+      "Synapse"
+    ],
+    "cloudEnvironment": "Azure — AKS + Synapse",
+    "currentVersion": "v4.1.0",
+    "deploymentStatus": "rolled-back",
+    "pipelineHealth": "unstable",
+    "securityScore": 69,
+    "complianceScore": 88,
+    "lastDeploymentAt": "2026-07-26T21:25:05.267Z",
+    "openVulnerabilities": {
+      "critical": 1,
+      "high": 3,
+      "medium": 8,
+      "low": 12
+    },
+    "availability": "99.88%",
+    "riskLevel": "high",
+    "slos": [
+      {
+        "metric": "availability",
+        "target": "99.9%",
+        "current": "99.88%",
+        "status": "at-risk"
+      },
+      {
+        "metric": "latency-p95",
+        "target": "< 5s (query)",
+        "current": "3.8s",
+        "status": "met"
+      },
+      {
+        "metric": "error-rate",
+        "target": "< 1%",
+        "current": "0.4%",
+        "status": "met"
+      }
+    ],
+    "argoAppName": "reporting-platform-prod",
+    "errorRate": "0.4%",
+    "latencyP95": "3.8s"
+  }
+]

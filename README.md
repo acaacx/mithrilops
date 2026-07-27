@@ -13,18 +13,30 @@ pnpm dev          # → http://localhost:5173
 
 That is the one documented command: the SPA runs standalone on in-browser mock providers, including simulated real-time pipeline activity (watch the Notification Worker run advance stage-by-stage).
 
-Optional API scaffold (same mock dataset over HTTP + SSE):
+Optional API scaffold (same mock dataset over HTTP + SSE — Python/FastAPI, managed with [uv](https://docs.astral.sh/uv/)):
 
 ```bash
+uv sync           # one-time: creates .venv from uv.lock
 pnpm dev:api      # → http://localhost:4000/health
 ```
+
+## Screenshots
+
+| Overview | Pipeline run |
+|---|---|
+| ![Executive overview](docs/screenshots/overview.png) | ![Pipeline run detail](docs/screenshots/pipeline-run.png) |
+
+| Security command center | AI pipeline generator |
+|---|---|
+| ![Security findings](docs/screenshots/security.png) | ![Pipeline generator](docs/screenshots/generator.png) |
 
 ## Commands
 
 | Command | What it does |
 |---|---|
 | `pnpm dev` | Run the web app (Vite, port 5173) |
-| `pnpm dev:api` | Run the Fastify API scaffold (port 4000) |
+| `pnpm dev:api` | Run the FastAPI scaffold via uv (port 4000) |
+| `pnpm test:api` | Pytest suite for the API |
 | `pnpm build` | Production build of all workspaces |
 | `pnpm lint` | ESLint across workspaces |
 | `pnpm typecheck` | Strict TypeScript across workspaces |
@@ -49,10 +61,11 @@ pnpm dev:api      # → http://localhost:4000/health
 ```
 apps/
   web/            React 18 + TS + Vite + Tailwind v4 + shadcn-style UI + React Flow + Recharts
-  api/            Fastify scaffold: zod validation, helmet, rate limiting, SSE stream
+  api/            FastAPI scaffold (uv workspace member): Pydantic validation,
+                  security headers, SSE stream, pytest suite, JSON fixtures
 packages/
   types/          Shared domain model, enums, zod schemas, provider interfaces
-  mock-data/      Deterministic seed data shared by web and api
+  mock-data/      Deterministic seed data; `export:fixtures` regenerates apps/api/data
 infrastructure/
   modules/        resource-group, network, key-vault, acr, identity, postgres, redis,
                   storage (WORM evidence), monitoring, container-apps, static-web-app
@@ -68,7 +81,7 @@ See [.env.example](.env.example). The web app needs none by default (`VITE_DATA_
 
 ## Security model (implemented vs simulated)
 
-**Actually implemented in this codebase:** strict TypeScript + zod input validation, RBAC permission matrix enforced in UI actions, audit-event recording of privileged operations and denials, CSP + secure headers (nginx + Fastify helmet), rate limiting, non-root containers, OIDC-only CI workflow (no long-lived Azure secrets), Terraform with private endpoints / deny-by-default network ACLs / RBAC-authorized Key Vault / immutable evidence storage.
+**Actually implemented in this codebase:** strict TypeScript + zod input validation in the SPA, Pydantic validation in the API, RBAC permission matrix enforced in UI actions, audit-event recording of privileged operations and denials, CSP + secure headers (nginx + FastAPI middleware), non-root containers, OIDC-only CI workflow (no long-lived Azure secrets), Terraform with private endpoints / deny-by-default network ACLs / RBAC-authorized Key Vault / immutable evidence storage. Rate limiting is an extension point (edge/API gateway in production).
 
 **Simulated (mock providers, clearly labeled):** scanner findings, Argo CD state, GitHub/PR actions, AI analysis, Entra ID sign-in (role switcher instead). See [docs/security-model.md](docs/security-model.md) for the full split, and note the rule enforced in code: **AI output never bypasses a security or production approval gate.**
 
@@ -84,7 +97,7 @@ terraform apply tfplan  # only after review/approval
 ## Known limitations & next integrations
 
 - Providers are mock; the natural next step is wiring `PipelineProvider` → GitHub Actions API and `DeploymentProvider` → Argo CD API (see [docs/integrations.md](docs/integrations.md)).
-- API is stateless mock; add PostgreSQL + Prisma, Redis, and Entra ID JWT validation at the marked extension points.
+- API is stateless mock serving exported JSON fixtures; add PostgreSQL + SQLAlchemy, Redis, and Entra ID JWT validation at the marked extension points.
 - Real-time is a timer-driven simulator; swap for the SSE stream in `apps/api` once providers are live.
 - AI service is deterministic; connect an LLM endpoint behind `AIService` (responses already carry confidence/evidence/disclaimer contracts).
 

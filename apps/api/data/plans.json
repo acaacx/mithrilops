@@ -1,0 +1,258 @@
+[
+  {
+    "id": "plan-payments-1482",
+    "applicationId": "app-payments",
+    "pipelineRunId": "run-1482",
+    "environment": "production",
+    "createdAt": "2026-07-27T04:25:05.269Z",
+    "summary": {
+      "add": 3,
+      "change": 2,
+      "destroy": 0
+    },
+    "monthlyCostEstimateUsd": 4180,
+    "costDeltaUsd": 310,
+    "policyViolations": [],
+    "driftStatus": "in-sync",
+    "moduleVersions": [
+      {
+        "module": "aks-cluster",
+        "version": "3.4.1"
+      },
+      {
+        "module": "key-vault",
+        "version": "2.2.0"
+      },
+      {
+        "module": "network",
+        "version": "4.0.2"
+      },
+      {
+        "module": "monitoring",
+        "version": "1.8.0"
+      }
+    ],
+    "stateStatus": "locked",
+    "lastApplyAt": "2026-07-26T01:25:05.269Z",
+    "requiresApproval": true,
+    "resources": [
+      {
+        "address": "module.payments.azurerm_kubernetes_cluster_node_pool.burst",
+        "resourceType": "azurerm_kubernetes_cluster_node_pool",
+        "action": "create",
+        "after": {
+          "name": "burst",
+          "vm_size": "Standard_D8ds_v5",
+          "min_count": "0",
+          "max_count": "6",
+          "zones": "1,2,3"
+        },
+        "securityNotes": "Autoscaling burst pool for ISO 20022 batch windows; taints restrict scheduling to payments workloads."
+      },
+      {
+        "address": "module.payments.azurerm_private_endpoint.kv",
+        "resourceType": "azurerm_private_endpoint",
+        "action": "create",
+        "after": {
+          "subnet": "snet-payments-data",
+          "target": "kv-meridian-payments",
+          "dns_zone": "privatelink.vaultcore.azure.net"
+        },
+        "securityNotes": "Moves Key Vault access fully onto the private link path."
+      },
+      {
+        "address": "module.payments.azurerm_monitor_metric_alert.p95_latency",
+        "resourceType": "azurerm_monitor_metric_alert",
+        "action": "create",
+        "after": {
+          "threshold": "250ms",
+          "window": "PT5M",
+          "severity": "2"
+        }
+      },
+      {
+        "address": "module.payments.azurerm_kubernetes_cluster.main",
+        "resourceType": "azurerm_kubernetes_cluster",
+        "action": "update",
+        "before": {
+          "kubernetes_version": "1.31.2"
+        },
+        "after": {
+          "kubernetes_version": "1.32.1"
+        },
+        "securityNotes": "Minor version bump; includes CVE fixes in kubelet."
+      },
+      {
+        "address": "module.payments.azurerm_application_gateway.ingress",
+        "resourceType": "azurerm_application_gateway",
+        "action": "update",
+        "before": {
+          "waf_mode": "Detection"
+        },
+        "after": {
+          "waf_mode": "Prevention"
+        },
+        "securityNotes": "WAF moves from Detection to Prevention after 30-day tuning window."
+      }
+    ]
+  },
+  {
+    "id": "plan-identity-0862",
+    "applicationId": "app-identity",
+    "pipelineRunId": "run-0862",
+    "environment": "development",
+    "createdAt": "2026-07-22T07:25:05.269Z",
+    "summary": {
+      "add": 0,
+      "change": 1,
+      "destroy": 0
+    },
+    "monthlyCostEstimateUsd": 1920,
+    "costDeltaUsd": 0,
+    "policyViolations": [
+      {
+        "policy": "CKV_AZURE_109 — Key Vault should restrict public network access",
+        "severity": "high",
+        "resource": "module.identity_kv.azurerm_key_vault.main",
+        "message": "network_acls.default_action changed from Deny to Allow. Blocked by policy gate."
+      }
+    ],
+    "driftStatus": "in-sync",
+    "moduleVersions": [
+      {
+        "module": "key-vault",
+        "version": "2.2.0"
+      },
+      {
+        "module": "identity",
+        "version": "1.5.3"
+      }
+    ],
+    "stateStatus": "unlocked",
+    "lastApplyAt": "2026-07-19T00:25:05.269Z",
+    "requiresApproval": true,
+    "resources": [
+      {
+        "address": "module.identity_kv.azurerm_key_vault.main",
+        "resourceType": "azurerm_key_vault",
+        "action": "update",
+        "before": {
+          "network_acls.default_action": "Deny",
+          "public_network_access_enabled": "false"
+        },
+        "after": {
+          "network_acls.default_action": "Allow",
+          "public_network_access_enabled": "true"
+        },
+        "securityNotes": "BLOCKED: would expose the token-signing vault to the public internet."
+      }
+    ]
+  },
+  {
+    "id": "plan-reporting-0713",
+    "applicationId": "app-reporting",
+    "pipelineRunId": "run-0713",
+    "environment": "production",
+    "createdAt": "2026-07-26T19:25:05.269Z",
+    "summary": {
+      "add": 2,
+      "change": 3,
+      "destroy": 1
+    },
+    "monthlyCostEstimateUsd": 6740,
+    "costDeltaUsd": -420,
+    "policyViolations": [
+      {
+        "policy": "ASB DP-4 — Storage accounts must disable public blob access",
+        "severity": "critical",
+        "resource": "azurerm_storage_account.reports",
+        "message": "allow_blob_public_access remains true; exception expired."
+      }
+    ],
+    "driftStatus": "drift-detected",
+    "moduleVersions": [
+      {
+        "module": "storage",
+        "version": "2.9.0"
+      },
+      {
+        "module": "aks-cluster",
+        "version": "3.4.1"
+      },
+      {
+        "module": "synapse",
+        "version": "1.2.7"
+      }
+    ],
+    "stateStatus": "unlocked",
+    "lastApplyAt": "2026-07-26T20:25:05.269Z",
+    "requiresApproval": true,
+    "resources": [
+      {
+        "address": "azurerm_storage_account.reports",
+        "resourceType": "azurerm_storage_account",
+        "action": "update",
+        "before": {
+          "allow_blob_public_access": "true",
+          "min_tls_version": "TLS1_2"
+        },
+        "after": {
+          "allow_blob_public_access": "true",
+          "min_tls_version": "TLS1_2"
+        },
+        "securityNotes": "Drift: portal edit re-enabled public access outside Terraform. Reconcile required."
+      },
+      {
+        "address": "module.reporting.azurerm_kubernetes_cluster_node_pool.spark",
+        "resourceType": "azurerm_kubernetes_cluster_node_pool",
+        "action": "update",
+        "before": {
+          "max_count": "12"
+        },
+        "after": {
+          "max_count": "8"
+        },
+        "securityNotes": "Right-sizing after partition regression rollback; saves ~$420/mo."
+      },
+      {
+        "address": "module.reporting.azurerm_role_assignment.synapse_reader",
+        "resourceType": "azurerm_role_assignment",
+        "action": "create",
+        "after": {
+          "role": "Reader",
+          "scope": "rg-reporting-prod"
+        }
+      },
+      {
+        "address": "module.reporting.azurerm_private_endpoint.synapse",
+        "resourceType": "azurerm_private_endpoint",
+        "action": "create",
+        "after": {
+          "subnet": "snet-reporting-data",
+          "target": "syn-meridian-prod"
+        }
+      },
+      {
+        "address": "module.reporting.azurerm_monitor_metric_alert.batch_overrun",
+        "resourceType": "azurerm_monitor_metric_alert",
+        "action": "update",
+        "before": {
+          "threshold": "45m"
+        },
+        "after": {
+          "threshold": "30m"
+        }
+      },
+      {
+        "address": "azurerm_storage_container.tmp_extract",
+        "resourceType": "azurerm_storage_container",
+        "action": "delete",
+        "before": {
+          "name": "tmp-extract-2019",
+          "access_type": "blob"
+        },
+        "securityNotes": "Removes the legacy public container."
+      }
+    ]
+  }
+]
