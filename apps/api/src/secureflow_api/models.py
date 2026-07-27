@@ -334,3 +334,44 @@ class AuditEvent(ApiModel):
     target_type: str
     outcome: Literal["success", "denied", "failure"]
     detail: str
+
+
+IntegrationStatus = Literal["connected", "degraded", "disconnected", "simulated"]
+IntegrationCategory = Literal[
+    "scm", "ci", "security", "registry", "iac", "cd", "observability", "identity", "tracking"
+]
+
+
+class Integration(ApiModel):
+    id: str
+    name: str
+    category: IntegrationCategory
+    status: IntegrationStatus
+    last_sync_at: str | None = None
+    description: str
+
+
+class ArchitectureNodeData(ApiModel):
+    id: str
+    label: str
+    kind: str
+    status: Literal["healthy", "warning", "critical", "unknown"]
+    owner: str
+    description: str
+    findings_count: int
+    dependencies: list[str]
+    related_stage_definition_ids: list[str]
+
+
+class ArchitectureEdge(ApiModel):
+    id: str
+    source: str
+    target: str
+    label: str | None = None
+
+
+class ArchitectureDiagram(ApiModel):
+    id: str
+    application_id: str
+    nodes: list[ArchitectureNodeData]
+    edges: list[ArchitectureEdge]

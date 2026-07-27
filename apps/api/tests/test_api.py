@@ -81,3 +81,39 @@ def test_security_headers():
     res = client.get("/health")
     assert res.headers["Content-Security-Policy"] == "default-src 'self'; frame-ancestors 'none'"
     assert res.headers["X-Content-Type-Options"] == "nosniff"
+
+
+def test_finding_by_id_and_404():
+    findings = client.get("/api/findings").json()
+    found = client.get(f"/api/findings/{findings[0]['id']}")
+    assert found.status_code == 200
+    assert found.json()["id"] == findings[0]["id"]
+    assert client.get("/api/findings/nope").status_code == 404
+
+
+def test_plan_by_id_and_404():
+    plans = client.get("/api/plans").json()
+    assert client.get(f"/api/plans/{plans[0]['id']}").json()["id"] == plans[0]["id"]
+    assert client.get("/api/plans/nope").status_code == 404
+
+
+def test_framework_by_id_and_404():
+    fw = client.get("/api/frameworks").json()[0]
+    assert client.get(f"/api/frameworks/{fw['id']}").json()["id"] == fw["id"]
+    assert client.get("/api/frameworks/nope").status_code == 404
+
+
+def test_integrations_list():
+    integrations = client.get("/api/integrations").json()
+    assert len(integrations) > 0
+    assert "lastSyncAt" in integrations[0] or "description" in integrations[0]
+
+
+def test_architecture_diagram_and_404():
+    apps = client.get("/api/applications").json()
+    diagram = client.get(f"/api/architecture/{apps[0]['id']}")
+    assert diagram.status_code == 200
+    body = diagram.json()
+    assert body["applicationId"] == apps[0]["id"]
+    assert len(body["nodes"]) > 0
+    assert client.get("/api/architecture/nope").status_code == 404
