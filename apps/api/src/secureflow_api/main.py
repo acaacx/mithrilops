@@ -23,17 +23,23 @@ from . import state
 from .logs import stage_logs
 from .models import (
     Application,
+    ApprovalBody,
     ArchitectureDiagram,
     AuditEvent,
+    AuditRecordBody,
     ComplianceFramework,
     Deployment,
     EnvironmentName,
+    FindingStatusBody,
     InfrastructurePlan,
     Integration,
     PipelineLogLine,
     PipelineRun,
     PipelineRunStatus,
+    PromoteBody,
+    RollbackBody,
     SecurityFinding,
+    SuppressionEntry,
 )
 
 logger = logging.getLogger("secureflow-api")
@@ -43,7 +49,7 @@ app = FastAPI(title="SecureFlow API", version="0.1.0", docs_url=None, redoc_url=
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[os.environ.get("CORS_ORIGIN", "http://localhost:5173")],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["*"],
 )
 
@@ -198,6 +204,171 @@ async def events() -> StreamingResponse:
 
 def _sse(event: str, payload: object) -> str:
     return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
+
+
+@app.post("/api/runs/{run_id}/stages/{stage_id}/retry", status_code=204)
+async def retry_stage(run_id: str, stage_id: str) -> None:
+    st = state.get_state()
+    run = next((r for r in st.runs if r.id == run_id), None)
+    stage = (
+        next((s for s in run.stages if s.id == stage_id or s.definition_id == stage_id), None)
+        if run
+        else None
+    )
+    if not run or not stage:
+        raise HTTPException(status_code=404, detail="stage_not_found")
+    stage.status = "running"
+    stage.failure_reason = None
+    stage.started_at = state.now_iso()
+    stage.finished_at = None
+    run.status = "running"
+    state.record_audit(
+        st,
+        actor="You",
+        actor_role="devsecops-engineer",
+        action="stage.retried",
+        target=f"{run_id} / {stage.definition_id}",
+        target_type="PipelineStage",
+        outcome="success",
+        detail=f"Manual retry of '{stage.name}'.",
+    )
+
+
+@app.post("/api/runs/{run_id}/approval", status_code=204)
+async def approve_deployment(run_id: str, body: ApprovalBody) -> None:
+    st = state.get_state()
+    run = next((r for r in st.runs if r.id == run_id), None)
+    if not run:
+        raise HTTPException(status_code=404, detail="run_not_found")
+    run.approval_status = body.decision
+    if body.decision == "approved":
+        run.status = "running"
+        stage = next((s for s in run.stages if s.status == "waiting-approval"), None)
+        if stage:
+            stage.status = "succeeded"
+            stage.finished_at = state.now_iso()
+    else:
+        run.status = "cancelled" if body.decision == "rejected" else "blocked"
+
+
+@app.patch("/api/findings/{finding_id}/status", status_code=204)
+async def update_finding_status(finding_id: str, body: FindingStatusBody) -> None:
+    st = state.get_state()
+    finding = next((f for f in st.findings if f.id == finding_id), None)
+    if not finding:
+        raise HTTPException(status_code=404, detail="finding_not_found")
+    finding.status = body.status
+    if body.reason:
+        finding.suppression_history.append(
+            SuppressionEntry(date=state.now_iso(), by="You", reason=body.reason)
+        )
+    state.record_audit(
+        st,
+        actor="You",
+        actor_role="security-engineer",
+        action="finding.status-changed",
+        target=f"{finding_id} → {body.status}",
+        target_type="SecurityFinding",
+        outcome="success",
+        detail=body.reason or "Status updated from the security command center.",
+    )
+
+
+@app.post("/api/applications/{app_id}/sync", status_code=204)
+async def sync_application(app_id: str) -> None:
+    st = state.get_state()
+    if not any(a.id == app_id for a in st.applications):
+        raise HTTPException(status_code=404, detail="application_not_found")
+    for d in st.deployments:
+        if d.application_id == app_id:
+            d.argo_sync_status = "synced"
+
+
+ENV_ORDER: list[EnvironmentName] = ["development", "test", "staging", "production"]
+
+
+@app.post("/api/applications/{app_id}/promote", status_code=204)
+async def promote(app_id: str, body: PromoteBody) -> None:
+    st = state.get_state()
+    if not any(a.id == app_id for a in st.applications):
+        raise HTTPException(status_code=404, detail="application_not_found")
+    from_index = ENV_ORDER.index(body.to_environment) - 1
+    from_env = ENV_ORDER[from_index] if from_index >= 0 else None
+    source = next(
+        (d for d in st.deployments if d.application_id == app_id and d.environment == from_env),
+        None,
+    )
+    target = next(
+        (
+            d
+            for d in st.deployments
+            if d.application_id == app_id and d.environment == body.to_environment
+        ),
+        None,
+    )
+    if source and target:
+        target.previous_version = target.version
+        target.version = source.version
+        target.status = "progressing"
+        target.argo_sync_status = "syncing"
+        target.deployed_at = state.now_iso()
+        target.deployed_by = "You (promotion)"
+    state.record_audit(
+        st,
+        actor="You",
+        actor_role="release-approver",
+        action="deployment.promoted",
+        target=f"{app_id} → {body.to_environment}",
+        target_type="Deployment",
+        outcome="success",
+        detail=f"Promoted {source.version if source else 'latest'} to {body.to_environment}.",
+    )
+
+
+@app.post("/api/applications/{app_id}/rollback", status_code=204)
+async def rollback(app_id: str, body: RollbackBody) -> None:
+    st = state.get_state()
+    if not any(a.id == app_id for a in st.applications):
+        raise HTTPException(status_code=404, detail="application_not_found")
+    prod = next(
+        (
+            d
+            for d in st.deployments
+            if d.application_id == app_id and d.environment == "production"
+        ),
+        None,
+    )
+    if prod:
+        prod.previous_version = prod.version
+        prod.version = body.revision
+        prod.status = "rolled-back"
+        prod.deployed_at = state.now_iso()
+        prod.deployed_by = "You (manual rollback)"
+    state.record_audit(
+        st,
+        actor="You",
+        actor_role="release-approver",
+        action="deployment.rolled-back",
+        target=f"{app_id} production → {body.revision}",
+        target_type="Deployment",
+        outcome="success",
+        detail=f"Manual rollback to {body.revision}.",
+    )
+
+
+@app.post("/api/audit", status_code=201)
+async def record_audit_event(body: AuditRecordBody) -> AuditEvent:
+    st = state.get_state()
+    return state.record_audit(
+        st,
+        actor=body.actor,
+        actor_role=body.actor_role,
+        action=body.action,
+        target=body.target,
+        target_type=body.target_type,
+        outcome=body.outcome,
+        detail=body.detail,
+    )
 
 
 def run() -> None:
