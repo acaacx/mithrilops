@@ -15,6 +15,7 @@ import type {
   PipelineRunFilters,
 } from "@secureflow/types";
 import { delay, mockState, nextAuditId } from "./mock-state";
+import { filterAndSortFindings, filterAndSortRuns, sortAuditEvents } from "./filters";
 
 /**
  * Mock provider implementations. Real integrations (GitHub, Argo CD, scanners)
@@ -23,25 +24,7 @@ import { delay, mockState, nextAuditId } from "./mock-state";
 
 export const pipelineProvider: PipelineProvider = {
   async listRuns(filters?: PipelineRunFilters) {
-    let runs = [...mockState.runs].sort(
-      (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
-    );
-    if (filters?.applicationId) runs = runs.filter((r) => r.applicationId === filters.applicationId);
-    if (filters?.status) runs = runs.filter((r) => r.status === filters.status);
-    if (filters?.environment) runs = runs.filter((r) => r.environment === filters.environment);
-    if (filters?.branch) runs = runs.filter((r) => r.commit.branch === filters.branch);
-    if (filters?.search) {
-      const q = filters.search.toLowerCase();
-      runs = runs.filter(
-        (r) =>
-          r.id.toLowerCase().includes(q) ||
-          r.commit.message.toLowerCase().includes(q) ||
-          r.commit.branch.toLowerCase().includes(q) ||
-          r.commit.author.toLowerCase().includes(q) ||
-          r.commit.sha.startsWith(q),
-      );
-    }
-    return delay(runs);
+    return delay(filterAndSortRuns(mockState.runs, filters));
   },
 
   async getRun(runId: string) {
@@ -105,34 +88,7 @@ export const pipelineProvider: PipelineProvider = {
 
 export const securityProvider = {
   async listFindings(filters?: FindingFilters) {
-    let findings = [...mockState.findings];
-    if (filters?.applicationId) findings = findings.filter((f) => f.applicationId === filters.applicationId);
-    if (filters?.repositoryId) findings = findings.filter((f) => f.repositoryId === filters.repositoryId);
-    if (filters?.branch) findings = findings.filter((f) => f.branch === filters.branch);
-    if (filters?.environment) findings = findings.filter((f) => f.environment === filters.environment);
-    if (filters?.scanner) findings = findings.filter((f) => f.scanner === filters.scanner);
-    if (filters?.type) findings = findings.filter((f) => f.type === filters.type);
-    if (filters?.severity) findings = findings.filter((f) => f.severity === filters.severity);
-    if (filters?.status) findings = findings.filter((f) => f.status === filters.status);
-    if (filters?.ownerUserId) findings = findings.filter((f) => f.ownerUserId === filters.ownerUserId);
-    if (filters?.pipelineRunId) findings = findings.filter((f) => f.pipelineRunId === filters.pipelineRunId);
-    if (filters?.frameworkId)
-      findings = findings.filter((f) =>
-        f.complianceMappings.some((m) => m.frameworkId === filters.frameworkId),
-      );
-    if (filters?.search) {
-      const q = filters.search.toLowerCase();
-      findings = findings.filter(
-        (f) =>
-          f.title.toLowerCase().includes(q) ||
-          f.ruleId.toLowerCase().includes(q) ||
-          (f.cve ?? "").toLowerCase().includes(q) ||
-          f.affectedResource.toLowerCase().includes(q),
-      );
-    }
-    const order = { critical: 0, high: 1, medium: 2, low: 3, informational: 4 };
-    findings.sort((a, b) => order[a.severity] - order[b.severity]);
-    return delay(findings);
+    return delay(filterAndSortFindings(mockState.findings, filters));
   },
 
   async getFinding(findingId: string) {
@@ -273,10 +229,7 @@ export const architectureProvider: ArchitectureProvider = {
 
 export const auditProvider: AuditProvider = {
   async listEvents(limit = 100) {
-    const events = [...mockState.audit].sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-    );
-    return delay(events.slice(0, limit));
+    return delay(sortAuditEvents(mockState.audit, limit));
   },
   async record(event: Omit<AuditEvent, "id" | "timestamp">) {
     mockState.audit.unshift({
