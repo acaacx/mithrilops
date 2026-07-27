@@ -163,7 +163,8 @@ export function useApproveDeployment(runId: string) {
         description: `Decision recorded for ${runId} with audit trail.`,
       });
     },
-    onError: (e) => toast.error("Decision failed", { description: String(e) }),
+    // Error toast is handled globally by the MutationCache in App.tsx
+    // (avoids double-toasting on failure).
   });
 }
 
