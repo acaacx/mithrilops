@@ -30,7 +30,7 @@ Release approval authority · pipeline evidence & audit trail · scanner finding
 
 ## Denial of service
 
-- API rate limiting (per-IP), Container Apps autoscaling with max caps, Azure Front Door/WAF recommended for the public edge (module included for App Gateway WAF in Prevention mode).
+- API rate limiting (per-IP), Container Apps autoscaling with max caps, Azure Front Door/WAF recommended for the public edge (no WAF module in this repo yet — add one before real exposure).
 
 ## Elevation of privilege
 

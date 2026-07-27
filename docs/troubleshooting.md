@@ -7,7 +7,7 @@ pnpm 10+ requires approving postinstall scripts. This repo allows `esbuild` in `
 Delete caches and reinstall: `rm -rf node_modules apps/*/node_modules packages/*/node_modules && pnpm install`. Node ≥ 20 required.
 
 ## Port already in use
-Web uses 5173, API 4000. `lsof -ti:5173 | xargs kill` or set `API_PORT` in `.env`.
+Web uses 5173, API 4000. `lsof -ti:5173 | xargs kill`, or move the API: `API_PORT=4100 pnpm dev:api` (the API reads environment variables only — it does not load `.env`).
 
 ## Playwright fails with "browser not found"
 `npx playwright install chromium` once, then `pnpm e2e`. The config reuses a running dev server, so a stale server with old code can cause mismatches — restart `pnpm dev` first.
