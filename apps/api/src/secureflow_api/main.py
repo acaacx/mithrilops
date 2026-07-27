@@ -13,6 +13,7 @@ import asyncio
 import json
 import logging
 import os
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -20,7 +21,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from . import state
+from .events import broadcast
 from .logs import stage_logs
+from .simulator import run_simulator
 from .models import (
     Application,
     ApprovalBody,
@@ -44,7 +47,20 @@ from .models import (
 
 logger = logging.getLogger("secureflow-api")
 
-app = FastAPI(title="SecureFlow API", version="0.1.0", docs_url=None, redoc_url=None)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = None
+    if os.environ.get("SIM_ENABLED", "1") != "0":
+        task = asyncio.create_task(run_simulator())
+    yield
+    if task:
+        task.cancel()
+
+
+app = FastAPI(
+    title="SecureFlow API", version="0.1.0", docs_url=None, redoc_url=None, lifespan=lifespan
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -187,13 +203,20 @@ async def get_architecture(app_id: str) -> ArchitectureDiagram:
 
 @app.get("/api/events")
 async def events() -> StreamingResponse:
-    """Server-Sent Events stream of simulated pipeline activity."""
+    """SSE stream: simulator events plus a 10s heartbeat."""
 
     async def stream():
-        yield _sse("hello", {"message": "SecureFlow event stream connected (simulated)"})
-        while True:
-            await asyncio.sleep(10)
-            yield _sse("heartbeat", {"at": datetime.now(timezone.utc).isoformat()})
+        queue = broadcast.subscribe()
+        try:
+            yield _sse("hello", {"message": "SecureFlow event stream connected (simulated)"})
+            while True:
+                try:
+                    event, payload = await asyncio.wait_for(queue.get(), timeout=10)
+                    yield _sse(event, payload)
+                except asyncio.TimeoutError:
+                    yield _sse("heartbeat", {"at": datetime.now(timezone.utc).isoformat()})
+        finally:
+            broadcast.unsubscribe(queue)
 
     return StreamingResponse(
         stream(),
