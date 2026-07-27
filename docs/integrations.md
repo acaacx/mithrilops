@@ -21,7 +21,7 @@ export function createHttpPipelineProvider(baseUrl: string): PipelineProvider {
 }
 ```
 
-Then add a `VITE_DATA_SOURCE` switch in the provider registry (`apps/web/src/lib/providers/index.ts`) — the env var is reserved in `.env.example` but nothing reads it yet; today the registry always uses the mock implementations.
+The provider registry (`apps/web/src/lib/providers/index.ts`) already reads `VITE_DATA_SOURCE`: `memory` (used in tests and the default Playwright suite) wires up the mock implementations directly; anything else — including unset, the default — wires up the HTTP implementations that call the FastAPI backend. To add a real integration, implement a new adapter (e.g. an SDK-backed provider) and register it alongside the existing `http` and `memory` branches.
 
 ## Mapping table
 

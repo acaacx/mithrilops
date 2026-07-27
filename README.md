@@ -77,7 +77,7 @@ docs/             Architecture, security model, threat model, integrations, depl
 
 ## Environment variables
 
-See [.env.example](.env.example). `VITE_DATA_SOURCE` selects the provider mode: `http` (default) calls the FastAPI backend at `/api/*` via the Vite dev proxy; `memory` runs fully in-browser against the mock dataset (see [docs/local-development.md](docs/local-development.md#data-modes)). No secrets belong in this repository — production secrets flow through Azure Key Vault + managed identity.
+See [.env.example](.env.example) (copy `VITE_*` entries into `apps/web/.env` — Vite's env root is `apps/web/`, so it doesn't read a root `.env`). `VITE_DATA_SOURCE` selects the provider mode: `http` (default) calls the FastAPI backend at `/api/*` via the Vite dev proxy; `memory` runs fully in-browser against the mock dataset (see [docs/local-development.md](docs/local-development.md#data-modes)). No secrets belong in this repository — production secrets flow through Azure Key Vault + managed identity.
 
 ## Security model (implemented vs simulated)
 
