@@ -7,8 +7,8 @@ flowchart TB
     subgraph web["apps/web — React SPA (Vite, Tailwind v4)"]
         pages["pages / components"]
         queries["lib/queries — TanStack Query"]
-        providers["lib/providers — provider interfaces<br/>mock implementations (today)<br/>HTTP implementations (planned)"]
-        realtime["lib/realtime/simulator — timer-driven event feed"]
+        providers["lib/providers — factory on VITE_DATA_SOURCE<br/>http implementations (default)<br/>mock implementations (memory mode)"]
+        realtime["lib/realtime — sse-client (http)<br/>simulator (memory)"]
         ai["lib/ai/ai-service — simulated AIService"]
         stores["stores — zustand: session (role/env/theme), notifications"]
         pages --> queries --> providers
@@ -18,10 +18,14 @@ flowchart TB
     end
 
     subgraph api["apps/api — FastAPI (uv-managed Python workspace)"]
-        endpoints["/api/* endpoints"]
-        sse["/api/events — SSE stream"]
+        endpoints["/api/* endpoints<br/>(GET + mutations)"]
+        sse["/api/events — SSE stream<br/>(run-updated, notification)"]
+        sim["server-side simulator<br/>(tick loop → broadcast)"]
+        state["in-memory state store<br/>seeded from fixtures"]
         fixtures["data/*.json fixtures<br/>(validated by Pydantic models)"]
-        endpoints --> fixtures
+        endpoints --> state --> fixtures
+        sim --> state
+        sim --> sse
     end
 
     subgraph packages["packages (shared TypeScript)"]
@@ -29,8 +33,8 @@ flowchart TB
         mockdata["mock-data — deterministic seeds<br/>(MOCK_NOW-pinned clock)"]
     end
 
-    providers -. "HTTP mode (planned):<br/>fetch /api/* + SSE" .-> endpoints
-    providers -. planned .-> sse
+    providers -- "http mode (default):<br/>fetch /api/* via Vite proxy" --> endpoints
+    sse -. "EventSource" .-> realtime
     mockdata -- "export:fixtures" --> fixtures
     providers --> mockdata
     web --> types
