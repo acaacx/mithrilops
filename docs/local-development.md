@@ -22,8 +22,8 @@ pnpm dev:api          # optional API on http://localhost:4000
 ```bash
 pnpm lint             # eslint (web)
 pnpm typecheck        # strict tsc across workspaces
-pnpm test             # vitest (28 unit/component tests)
-pnpm test:api         # pytest (9 API tests, via uv)
+pnpm test             # vitest (41 unit/component tests)
+pnpm test:api         # pytest (28 API tests, via uv)
 pnpm --filter @secureflow/web test:watch
 pnpm e2e              # playwright, memory mode; first time: npx playwright install chromium
 pnpm e2e:http         # playwright, http mode: boots uv API + vite dev server
