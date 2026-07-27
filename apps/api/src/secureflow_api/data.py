@@ -13,9 +13,11 @@ from pydantic import TypeAdapter
 
 from .models import (
     Application,
+    ArchitectureDiagram,
     AuditEvent,
     ComplianceFramework,
     Deployment,
+    Integration,
     InfrastructurePlan,
     PipelineRun,
     SecurityFinding,
@@ -62,3 +64,13 @@ def compliance_frameworks() -> list[ComplianceFramework]:
 @cache
 def audit_events() -> list[AuditEvent]:
     return _load("audit", TypeAdapter(list[AuditEvent]))
+
+
+@cache
+def integrations() -> list[Integration]:
+    return _load("integrations", TypeAdapter(list[Integration]))
+
+
+@cache
+def architecture_diagrams() -> list[ArchitectureDiagram]:
+    return _load("diagrams", TypeAdapter(list[ArchitectureDiagram]))

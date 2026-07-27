@@ -23,11 +23,13 @@ from . import data
 from .logs import stage_logs
 from .models import (
     Application,
+    ArchitectureDiagram,
     AuditEvent,
     ComplianceFramework,
     Deployment,
     EnvironmentName,
     InfrastructurePlan,
+    Integration,
     PipelineLogLine,
     PipelineRun,
     PipelineRunStatus,
@@ -132,6 +134,43 @@ async def list_frameworks() -> list[ComplianceFramework]:
 @app.get("/api/audit")
 async def list_audit() -> list[AuditEvent]:
     return data.audit_events()
+
+
+@app.get("/api/findings/{finding_id}")
+async def get_finding(finding_id: str) -> SecurityFinding:
+    found = next((f for f in data.security_findings() if f.id == finding_id), None)
+    if not found:
+        raise HTTPException(status_code=404, detail="finding_not_found")
+    return found
+
+
+@app.get("/api/plans/{plan_id}")
+async def get_plan(plan_id: str) -> InfrastructurePlan:
+    plan = next((p for p in data.infrastructure_plans() if p.id == plan_id), None)
+    if not plan:
+        raise HTTPException(status_code=404, detail="plan_not_found")
+    return plan
+
+
+@app.get("/api/frameworks/{framework_id}")
+async def get_framework(framework_id: str) -> ComplianceFramework:
+    fw = next((f for f in data.compliance_frameworks() if f.id == framework_id), None)
+    if not fw:
+        raise HTTPException(status_code=404, detail="framework_not_found")
+    return fw
+
+
+@app.get("/api/integrations")
+async def list_integrations() -> list[Integration]:
+    return data.integrations()
+
+
+@app.get("/api/architecture/{app_id}")
+async def get_architecture(app_id: str) -> ArchitectureDiagram:
+    diagram = next((d for d in data.architecture_diagrams() if d.application_id == app_id), None)
+    if not diagram:
+        raise HTTPException(status_code=404, detail="diagram_not_found")
+    return diagram
 
 
 @app.get("/api/events")

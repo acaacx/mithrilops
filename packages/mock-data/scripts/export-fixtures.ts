@@ -15,10 +15,12 @@ process.env.MOCK_NOW = String(Date.parse("2026-07-27T00:00:00.000Z"));
 
 const {
   applications,
+  architectureDiagrams,
   auditEvents,
   complianceFrameworks,
   deployments,
   infrastructurePlans,
+  integrations,
   pipelineRuns,
   securityFindings,
 } = await import("../src/index");
@@ -35,4 +37,6 @@ write("deployments", deployments);
 write("plans", infrastructurePlans);
 write("frameworks", complianceFrameworks);
 write("audit", auditEvents);
+write("integrations", integrations);
+write("diagrams", architectureDiagrams);
 console.log(`fixtures written to ${out}`);

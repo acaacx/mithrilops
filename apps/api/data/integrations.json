@@ -1,0 +1,185 @@
+[
+  {
+    "id": "int-github",
+    "name": "GitHub",
+    "category": "scm",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:54:00.000Z",
+    "description": "Repositories, pull requests, branch protection."
+  },
+  {
+    "id": "int-actions",
+    "name": "GitHub Actions",
+    "category": "ci",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:54:00.000Z",
+    "description": "Workflow runs and OIDC federation to Azure."
+  },
+  {
+    "id": "int-azdo",
+    "name": "Azure DevOps",
+    "category": "ci",
+    "status": "disconnected",
+    "description": "Future provider — adapter interface ready, not configured."
+  },
+  {
+    "id": "int-sonar",
+    "name": "SonarQube",
+    "category": "security",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T22:00:00.000Z",
+    "description": "SAST and code-quality gates."
+  },
+  {
+    "id": "int-snyk",
+    "name": "Snyk",
+    "category": "security",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T22:00:00.000Z",
+    "description": "Dependency (SCA) scanning."
+  },
+  {
+    "id": "int-trivy",
+    "name": "Trivy",
+    "category": "security",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:00:00.000Z",
+    "description": "Container image and configuration scanning."
+  },
+  {
+    "id": "int-checkov",
+    "name": "Checkov",
+    "category": "security",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T21:00:00.000Z",
+    "description": "Terraform policy-as-code scanning."
+  },
+  {
+    "id": "int-tfsec",
+    "name": "tfsec",
+    "category": "security",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T21:00:00.000Z",
+    "description": "Terraform static analysis."
+  },
+  {
+    "id": "int-gitleaks",
+    "name": "Gitleaks",
+    "category": "security",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:00:00.000Z",
+    "description": "Secret detection in code and history."
+  },
+  {
+    "id": "int-zap",
+    "name": "OWASP ZAP",
+    "category": "security",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T04:00:00.000Z",
+    "description": "DAST scans against staging."
+  },
+  {
+    "id": "int-syft",
+    "name": "Syft",
+    "category": "security",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:00:00.000Z",
+    "description": "SBOM generation (SPDX)."
+  },
+  {
+    "id": "int-cosign",
+    "name": "Cosign",
+    "category": "security",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:00:00.000Z",
+    "description": "Image signing and verification."
+  },
+  {
+    "id": "int-acr",
+    "name": "Azure Container Registry",
+    "category": "registry",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:30:00.000Z",
+    "description": "Private image registry with content trust."
+  },
+  {
+    "id": "int-terraform",
+    "name": "Terraform",
+    "category": "iac",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T20:00:00.000Z",
+    "description": "Plans, applies, state and drift."
+  },
+  {
+    "id": "int-argo",
+    "name": "Argo CD",
+    "category": "cd",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:48:00.000Z",
+    "description": "GitOps sync status and health."
+  },
+  {
+    "id": "int-k8s",
+    "name": "Kubernetes",
+    "category": "cd",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:48:00.000Z",
+    "description": "Workload status from AKS clusters."
+  },
+  {
+    "id": "int-prom",
+    "name": "Prometheus",
+    "category": "observability",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:54:00.000Z",
+    "description": "Metrics and SLO burn-rate alerts."
+  },
+  {
+    "id": "int-grafana",
+    "name": "Grafana",
+    "category": "observability",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:54:00.000Z",
+    "description": "Dashboards for release health."
+  },
+  {
+    "id": "int-azmon",
+    "name": "Azure Monitor",
+    "category": "observability",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:42:00.000Z",
+    "description": "Platform metrics, logs, and alerts."
+  },
+  {
+    "id": "int-defender",
+    "name": "Microsoft Defender for Cloud",
+    "category": "security",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:00:00.000Z",
+    "description": "CSPM findings and workload protection."
+  },
+  {
+    "id": "int-entra",
+    "name": "Microsoft Entra ID",
+    "category": "identity",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T23:30:00.000Z",
+    "description": "Authentication, workload identities, RBAC."
+  },
+  {
+    "id": "int-azpolicy",
+    "name": "Azure Policy",
+    "category": "security",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T22:00:00.000Z",
+    "description": "Guardrails and compliance evaluation."
+  },
+  {
+    "id": "int-jira",
+    "name": "Jira / GitHub Issues",
+    "category": "tracking",
+    "status": "simulated",
+    "lastSyncAt": "2026-07-26T19:00:00.000Z",
+    "description": "Remediation task tracking."
+  }
+]

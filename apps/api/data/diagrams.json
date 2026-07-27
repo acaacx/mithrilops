@@ -1,0 +1,1642 @@
+[
+  {
+    "id": "arch-app-payments",
+    "applicationId": "app-payments",
+    "nodes": [
+      {
+        "id": "github",
+        "label": "GitHub Repository",
+        "kind": "scm",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "Source of truth with branch protection and required reviews.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "pr-opened",
+          "checkout"
+        ]
+      },
+      {
+        "id": "actions",
+        "label": "GitHub Actions",
+        "kind": "ci",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "CI pipeline with OIDC federation to Azure — no long-lived secrets.",
+        "findingsCount": 0,
+        "dependencies": [
+          "github"
+        ],
+        "relatedStageDefinitionIds": [
+          "lint",
+          "unit-tests",
+          "image-build"
+        ]
+      },
+      {
+        "id": "terraform",
+        "label": "Terraform",
+        "kind": "iac",
+        "status": "warning",
+        "owner": "Platform Engineering",
+        "description": "Modular IaC with remote state in Azure Storage and state locking.",
+        "findingsCount": 2,
+        "dependencies": [
+          "actions"
+        ],
+        "relatedStageDefinitionIds": [
+          "tf-plan",
+          "tf-policy",
+          "tf-apply"
+        ]
+      },
+      {
+        "id": "acr",
+        "label": "Azure Container Registry",
+        "kind": "registry",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "Private registry; images signed with Cosign, scanned by Trivy.",
+        "findingsCount": 1,
+        "dependencies": [
+          "actions"
+        ],
+        "relatedStageDefinitionIds": [
+          "publish",
+          "image-scan",
+          "sign"
+        ]
+      },
+      {
+        "id": "aks",
+        "label": "Azure Kubernetes Service",
+        "kind": "compute",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Private AKS cluster; workload identity, network policies enforced.",
+        "findingsCount": 2,
+        "dependencies": [
+          "acr",
+          "argocd"
+        ],
+        "relatedStageDefinitionIds": [
+          "deploy-dev",
+          "prod-deploy"
+        ]
+      },
+      {
+        "id": "argocd",
+        "label": "Argo CD",
+        "kind": "cd",
+        "status": "healthy",
+        "owner": "Release Engineering",
+        "description": "GitOps controller reconciling desired state from environment repos.",
+        "findingsCount": 0,
+        "dependencies": [
+          "github"
+        ],
+        "relatedStageDefinitionIds": [
+          "argo-sync"
+        ]
+      },
+      {
+        "id": "keyvault",
+        "label": "Azure Key Vault",
+        "kind": "secrets",
+        "status": "warning",
+        "owner": "Security Engineering",
+        "description": "Secrets and certificates; access via managed identity only.",
+        "findingsCount": 1,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "iam-review"
+        ]
+      },
+      {
+        "id": "entra",
+        "label": "Microsoft Entra ID",
+        "kind": "identity",
+        "status": "healthy",
+        "owner": "Identity Platform",
+        "description": "Workload identities, RBAC assignments, conditional access.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "iam-review"
+        ]
+      },
+      {
+        "id": "prometheus",
+        "label": "Prometheus",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Cluster metrics; SLO burn-rate alerts drive automated rollback.",
+        "findingsCount": 0,
+        "dependencies": [
+          "aks"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify",
+          "auto-rollback"
+        ]
+      },
+      {
+        "id": "grafana",
+        "label": "Grafana",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Dashboards for golden signals and release health.",
+        "findingsCount": 0,
+        "dependencies": [
+          "prometheus"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "azmonitor",
+        "label": "Azure Monitor",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Platform metrics, activity logs, alert routing.",
+        "findingsCount": 0,
+        "dependencies": [
+          "aks"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "loganalytics",
+        "label": "Log Analytics",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Centralized logs with 90-day retention and sensitive-data redaction.",
+        "findingsCount": 0,
+        "dependencies": [
+          "azmonitor"
+        ],
+        "relatedStageDefinitionIds": []
+      },
+      {
+        "id": "appinsights",
+        "label": "Application Insights",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Distributed tracing and dependency maps.",
+        "findingsCount": 0,
+        "dependencies": [
+          "azmonitor"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "azpolicy",
+        "label": "Azure Policy",
+        "kind": "governance",
+        "status": "healthy",
+        "owner": "Security Engineering",
+        "description": "Deny-by-default guardrails; policy-as-code evaluated in pipeline.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "tf-policy",
+          "iam-review"
+        ]
+      },
+      {
+        "id": "defender",
+        "label": "Defender for Cloud",
+        "kind": "security",
+        "status": "warning",
+        "owner": "Security Engineering",
+        "description": "CSPM and workload protection; findings feed the command center.",
+        "findingsCount": 3,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "image-scan"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "github",
+        "target": "actions",
+        "label": "triggers"
+      },
+      {
+        "id": "e2",
+        "source": "actions",
+        "target": "terraform",
+        "label": "plan/apply"
+      },
+      {
+        "id": "e3",
+        "source": "actions",
+        "target": "acr",
+        "label": "push image"
+      },
+      {
+        "id": "e4",
+        "source": "github",
+        "target": "argocd",
+        "label": "desired state"
+      },
+      {
+        "id": "e5",
+        "source": "argocd",
+        "target": "aks",
+        "label": "sync"
+      },
+      {
+        "id": "e6",
+        "source": "acr",
+        "target": "aks",
+        "label": "pull"
+      },
+      {
+        "id": "e7",
+        "source": "entra",
+        "target": "aks",
+        "label": "workload identity"
+      },
+      {
+        "id": "e8",
+        "source": "keyvault",
+        "target": "aks",
+        "label": "secrets (CSI)"
+      },
+      {
+        "id": "e9",
+        "source": "aks",
+        "target": "prometheus",
+        "label": "metrics"
+      },
+      {
+        "id": "e10",
+        "source": "prometheus",
+        "target": "grafana",
+        "label": "dashboards"
+      },
+      {
+        "id": "e11",
+        "source": "aks",
+        "target": "azmonitor",
+        "label": "platform logs"
+      },
+      {
+        "id": "e12",
+        "source": "azmonitor",
+        "target": "loganalytics",
+        "label": "ingest"
+      },
+      {
+        "id": "e13",
+        "source": "azmonitor",
+        "target": "appinsights",
+        "label": "traces"
+      },
+      {
+        "id": "e14",
+        "source": "azpolicy",
+        "target": "aks",
+        "label": "guardrails"
+      },
+      {
+        "id": "e15",
+        "source": "defender",
+        "target": "aks",
+        "label": "protection"
+      },
+      {
+        "id": "e16",
+        "source": "terraform",
+        "target": "keyvault",
+        "label": "provisions"
+      }
+    ]
+  },
+  {
+    "id": "arch-app-portal",
+    "applicationId": "app-portal",
+    "nodes": [
+      {
+        "id": "github",
+        "label": "GitHub Repository",
+        "kind": "scm",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "Source of truth with branch protection and required reviews.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "pr-opened",
+          "checkout"
+        ]
+      },
+      {
+        "id": "actions",
+        "label": "GitHub Actions",
+        "kind": "ci",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "CI pipeline with OIDC federation to Azure — no long-lived secrets.",
+        "findingsCount": 0,
+        "dependencies": [
+          "github"
+        ],
+        "relatedStageDefinitionIds": [
+          "lint",
+          "unit-tests",
+          "image-build"
+        ]
+      },
+      {
+        "id": "terraform",
+        "label": "Terraform",
+        "kind": "iac",
+        "status": "warning",
+        "owner": "Platform Engineering",
+        "description": "Modular IaC with remote state in Azure Storage and state locking.",
+        "findingsCount": 2,
+        "dependencies": [
+          "actions"
+        ],
+        "relatedStageDefinitionIds": [
+          "tf-plan",
+          "tf-policy",
+          "tf-apply"
+        ]
+      },
+      {
+        "id": "acr",
+        "label": "Azure Container Registry",
+        "kind": "registry",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "Private registry; images signed with Cosign, scanned by Trivy.",
+        "findingsCount": 1,
+        "dependencies": [
+          "actions"
+        ],
+        "relatedStageDefinitionIds": [
+          "publish",
+          "image-scan",
+          "sign"
+        ]
+      },
+      {
+        "id": "aks",
+        "label": "Azure Kubernetes Service",
+        "kind": "compute",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Private AKS cluster; workload identity, network policies enforced.",
+        "findingsCount": 2,
+        "dependencies": [
+          "acr",
+          "argocd"
+        ],
+        "relatedStageDefinitionIds": [
+          "deploy-dev",
+          "prod-deploy"
+        ]
+      },
+      {
+        "id": "argocd",
+        "label": "Argo CD",
+        "kind": "cd",
+        "status": "healthy",
+        "owner": "Release Engineering",
+        "description": "GitOps controller reconciling desired state from environment repos.",
+        "findingsCount": 0,
+        "dependencies": [
+          "github"
+        ],
+        "relatedStageDefinitionIds": [
+          "argo-sync"
+        ]
+      },
+      {
+        "id": "keyvault",
+        "label": "Azure Key Vault",
+        "kind": "secrets",
+        "status": "warning",
+        "owner": "Security Engineering",
+        "description": "Secrets and certificates; access via managed identity only.",
+        "findingsCount": 1,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "iam-review"
+        ]
+      },
+      {
+        "id": "entra",
+        "label": "Microsoft Entra ID",
+        "kind": "identity",
+        "status": "healthy",
+        "owner": "Identity Platform",
+        "description": "Workload identities, RBAC assignments, conditional access.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "iam-review"
+        ]
+      },
+      {
+        "id": "prometheus",
+        "label": "Prometheus",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Cluster metrics; SLO burn-rate alerts drive automated rollback.",
+        "findingsCount": 0,
+        "dependencies": [
+          "aks"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify",
+          "auto-rollback"
+        ]
+      },
+      {
+        "id": "grafana",
+        "label": "Grafana",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Dashboards for golden signals and release health.",
+        "findingsCount": 0,
+        "dependencies": [
+          "prometheus"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "azmonitor",
+        "label": "Azure Monitor",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Platform metrics, activity logs, alert routing.",
+        "findingsCount": 0,
+        "dependencies": [
+          "aks"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "loganalytics",
+        "label": "Log Analytics",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Centralized logs with 90-day retention and sensitive-data redaction.",
+        "findingsCount": 0,
+        "dependencies": [
+          "azmonitor"
+        ],
+        "relatedStageDefinitionIds": []
+      },
+      {
+        "id": "appinsights",
+        "label": "Application Insights",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Distributed tracing and dependency maps.",
+        "findingsCount": 0,
+        "dependencies": [
+          "azmonitor"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "azpolicy",
+        "label": "Azure Policy",
+        "kind": "governance",
+        "status": "healthy",
+        "owner": "Security Engineering",
+        "description": "Deny-by-default guardrails; policy-as-code evaluated in pipeline.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "tf-policy",
+          "iam-review"
+        ]
+      },
+      {
+        "id": "defender",
+        "label": "Defender for Cloud",
+        "kind": "security",
+        "status": "warning",
+        "owner": "Security Engineering",
+        "description": "CSPM and workload protection; findings feed the command center.",
+        "findingsCount": 3,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "image-scan"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "github",
+        "target": "actions",
+        "label": "triggers"
+      },
+      {
+        "id": "e2",
+        "source": "actions",
+        "target": "terraform",
+        "label": "plan/apply"
+      },
+      {
+        "id": "e3",
+        "source": "actions",
+        "target": "acr",
+        "label": "push image"
+      },
+      {
+        "id": "e4",
+        "source": "github",
+        "target": "argocd",
+        "label": "desired state"
+      },
+      {
+        "id": "e5",
+        "source": "argocd",
+        "target": "aks",
+        "label": "sync"
+      },
+      {
+        "id": "e6",
+        "source": "acr",
+        "target": "aks",
+        "label": "pull"
+      },
+      {
+        "id": "e7",
+        "source": "entra",
+        "target": "aks",
+        "label": "workload identity"
+      },
+      {
+        "id": "e8",
+        "source": "keyvault",
+        "target": "aks",
+        "label": "secrets (CSI)"
+      },
+      {
+        "id": "e9",
+        "source": "aks",
+        "target": "prometheus",
+        "label": "metrics"
+      },
+      {
+        "id": "e10",
+        "source": "prometheus",
+        "target": "grafana",
+        "label": "dashboards"
+      },
+      {
+        "id": "e11",
+        "source": "aks",
+        "target": "azmonitor",
+        "label": "platform logs"
+      },
+      {
+        "id": "e12",
+        "source": "azmonitor",
+        "target": "loganalytics",
+        "label": "ingest"
+      },
+      {
+        "id": "e13",
+        "source": "azmonitor",
+        "target": "appinsights",
+        "label": "traces"
+      },
+      {
+        "id": "e14",
+        "source": "azpolicy",
+        "target": "aks",
+        "label": "guardrails"
+      },
+      {
+        "id": "e15",
+        "source": "defender",
+        "target": "aks",
+        "label": "protection"
+      },
+      {
+        "id": "e16",
+        "source": "terraform",
+        "target": "keyvault",
+        "label": "provisions"
+      }
+    ]
+  },
+  {
+    "id": "arch-app-identity",
+    "applicationId": "app-identity",
+    "nodes": [
+      {
+        "id": "github",
+        "label": "GitHub Repository",
+        "kind": "scm",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "Source of truth with branch protection and required reviews.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "pr-opened",
+          "checkout"
+        ]
+      },
+      {
+        "id": "actions",
+        "label": "GitHub Actions",
+        "kind": "ci",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "CI pipeline with OIDC federation to Azure — no long-lived secrets.",
+        "findingsCount": 0,
+        "dependencies": [
+          "github"
+        ],
+        "relatedStageDefinitionIds": [
+          "lint",
+          "unit-tests",
+          "image-build"
+        ]
+      },
+      {
+        "id": "terraform",
+        "label": "Terraform",
+        "kind": "iac",
+        "status": "warning",
+        "owner": "Platform Engineering",
+        "description": "Modular IaC with remote state in Azure Storage and state locking.",
+        "findingsCount": 2,
+        "dependencies": [
+          "actions"
+        ],
+        "relatedStageDefinitionIds": [
+          "tf-plan",
+          "tf-policy",
+          "tf-apply"
+        ]
+      },
+      {
+        "id": "acr",
+        "label": "Azure Container Registry",
+        "kind": "registry",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "Private registry; images signed with Cosign, scanned by Trivy.",
+        "findingsCount": 1,
+        "dependencies": [
+          "actions"
+        ],
+        "relatedStageDefinitionIds": [
+          "publish",
+          "image-scan",
+          "sign"
+        ]
+      },
+      {
+        "id": "aks",
+        "label": "Azure Kubernetes Service",
+        "kind": "compute",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Private AKS cluster; workload identity, network policies enforced.",
+        "findingsCount": 2,
+        "dependencies": [
+          "acr",
+          "argocd"
+        ],
+        "relatedStageDefinitionIds": [
+          "deploy-dev",
+          "prod-deploy"
+        ]
+      },
+      {
+        "id": "argocd",
+        "label": "Argo CD",
+        "kind": "cd",
+        "status": "healthy",
+        "owner": "Release Engineering",
+        "description": "GitOps controller reconciling desired state from environment repos.",
+        "findingsCount": 0,
+        "dependencies": [
+          "github"
+        ],
+        "relatedStageDefinitionIds": [
+          "argo-sync"
+        ]
+      },
+      {
+        "id": "keyvault",
+        "label": "Azure Key Vault",
+        "kind": "secrets",
+        "status": "warning",
+        "owner": "Security Engineering",
+        "description": "Secrets and certificates; access via managed identity only.",
+        "findingsCount": 1,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "iam-review"
+        ]
+      },
+      {
+        "id": "entra",
+        "label": "Microsoft Entra ID",
+        "kind": "identity",
+        "status": "healthy",
+        "owner": "Identity Platform",
+        "description": "Workload identities, RBAC assignments, conditional access.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "iam-review"
+        ]
+      },
+      {
+        "id": "prometheus",
+        "label": "Prometheus",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Cluster metrics; SLO burn-rate alerts drive automated rollback.",
+        "findingsCount": 0,
+        "dependencies": [
+          "aks"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify",
+          "auto-rollback"
+        ]
+      },
+      {
+        "id": "grafana",
+        "label": "Grafana",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Dashboards for golden signals and release health.",
+        "findingsCount": 0,
+        "dependencies": [
+          "prometheus"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "azmonitor",
+        "label": "Azure Monitor",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Platform metrics, activity logs, alert routing.",
+        "findingsCount": 0,
+        "dependencies": [
+          "aks"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "loganalytics",
+        "label": "Log Analytics",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Centralized logs with 90-day retention and sensitive-data redaction.",
+        "findingsCount": 0,
+        "dependencies": [
+          "azmonitor"
+        ],
+        "relatedStageDefinitionIds": []
+      },
+      {
+        "id": "appinsights",
+        "label": "Application Insights",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Distributed tracing and dependency maps.",
+        "findingsCount": 0,
+        "dependencies": [
+          "azmonitor"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "azpolicy",
+        "label": "Azure Policy",
+        "kind": "governance",
+        "status": "healthy",
+        "owner": "Security Engineering",
+        "description": "Deny-by-default guardrails; policy-as-code evaluated in pipeline.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "tf-policy",
+          "iam-review"
+        ]
+      },
+      {
+        "id": "defender",
+        "label": "Defender for Cloud",
+        "kind": "security",
+        "status": "warning",
+        "owner": "Security Engineering",
+        "description": "CSPM and workload protection; findings feed the command center.",
+        "findingsCount": 3,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "image-scan"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "github",
+        "target": "actions",
+        "label": "triggers"
+      },
+      {
+        "id": "e2",
+        "source": "actions",
+        "target": "terraform",
+        "label": "plan/apply"
+      },
+      {
+        "id": "e3",
+        "source": "actions",
+        "target": "acr",
+        "label": "push image"
+      },
+      {
+        "id": "e4",
+        "source": "github",
+        "target": "argocd",
+        "label": "desired state"
+      },
+      {
+        "id": "e5",
+        "source": "argocd",
+        "target": "aks",
+        "label": "sync"
+      },
+      {
+        "id": "e6",
+        "source": "acr",
+        "target": "aks",
+        "label": "pull"
+      },
+      {
+        "id": "e7",
+        "source": "entra",
+        "target": "aks",
+        "label": "workload identity"
+      },
+      {
+        "id": "e8",
+        "source": "keyvault",
+        "target": "aks",
+        "label": "secrets (CSI)"
+      },
+      {
+        "id": "e9",
+        "source": "aks",
+        "target": "prometheus",
+        "label": "metrics"
+      },
+      {
+        "id": "e10",
+        "source": "prometheus",
+        "target": "grafana",
+        "label": "dashboards"
+      },
+      {
+        "id": "e11",
+        "source": "aks",
+        "target": "azmonitor",
+        "label": "platform logs"
+      },
+      {
+        "id": "e12",
+        "source": "azmonitor",
+        "target": "loganalytics",
+        "label": "ingest"
+      },
+      {
+        "id": "e13",
+        "source": "azmonitor",
+        "target": "appinsights",
+        "label": "traces"
+      },
+      {
+        "id": "e14",
+        "source": "azpolicy",
+        "target": "aks",
+        "label": "guardrails"
+      },
+      {
+        "id": "e15",
+        "source": "defender",
+        "target": "aks",
+        "label": "protection"
+      },
+      {
+        "id": "e16",
+        "source": "terraform",
+        "target": "keyvault",
+        "label": "provisions"
+      }
+    ]
+  },
+  {
+    "id": "arch-app-notify",
+    "applicationId": "app-notify",
+    "nodes": [
+      {
+        "id": "github",
+        "label": "GitHub Repository",
+        "kind": "scm",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "Source of truth with branch protection and required reviews.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "pr-opened",
+          "checkout"
+        ]
+      },
+      {
+        "id": "actions",
+        "label": "GitHub Actions",
+        "kind": "ci",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "CI pipeline with OIDC federation to Azure — no long-lived secrets.",
+        "findingsCount": 0,
+        "dependencies": [
+          "github"
+        ],
+        "relatedStageDefinitionIds": [
+          "lint",
+          "unit-tests",
+          "image-build"
+        ]
+      },
+      {
+        "id": "terraform",
+        "label": "Terraform",
+        "kind": "iac",
+        "status": "warning",
+        "owner": "Platform Engineering",
+        "description": "Modular IaC with remote state in Azure Storage and state locking.",
+        "findingsCount": 2,
+        "dependencies": [
+          "actions"
+        ],
+        "relatedStageDefinitionIds": [
+          "tf-plan",
+          "tf-policy",
+          "tf-apply"
+        ]
+      },
+      {
+        "id": "acr",
+        "label": "Azure Container Registry",
+        "kind": "registry",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "Private registry; images signed with Cosign, scanned by Trivy.",
+        "findingsCount": 1,
+        "dependencies": [
+          "actions"
+        ],
+        "relatedStageDefinitionIds": [
+          "publish",
+          "image-scan",
+          "sign"
+        ]
+      },
+      {
+        "id": "aks",
+        "label": "Azure Kubernetes Service",
+        "kind": "compute",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Private AKS cluster; workload identity, network policies enforced.",
+        "findingsCount": 2,
+        "dependencies": [
+          "acr",
+          "argocd"
+        ],
+        "relatedStageDefinitionIds": [
+          "deploy-dev",
+          "prod-deploy"
+        ]
+      },
+      {
+        "id": "argocd",
+        "label": "Argo CD",
+        "kind": "cd",
+        "status": "healthy",
+        "owner": "Release Engineering",
+        "description": "GitOps controller reconciling desired state from environment repos.",
+        "findingsCount": 0,
+        "dependencies": [
+          "github"
+        ],
+        "relatedStageDefinitionIds": [
+          "argo-sync"
+        ]
+      },
+      {
+        "id": "keyvault",
+        "label": "Azure Key Vault",
+        "kind": "secrets",
+        "status": "warning",
+        "owner": "Security Engineering",
+        "description": "Secrets and certificates; access via managed identity only.",
+        "findingsCount": 1,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "iam-review"
+        ]
+      },
+      {
+        "id": "entra",
+        "label": "Microsoft Entra ID",
+        "kind": "identity",
+        "status": "healthy",
+        "owner": "Identity Platform",
+        "description": "Workload identities, RBAC assignments, conditional access.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "iam-review"
+        ]
+      },
+      {
+        "id": "prometheus",
+        "label": "Prometheus",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Cluster metrics; SLO burn-rate alerts drive automated rollback.",
+        "findingsCount": 0,
+        "dependencies": [
+          "aks"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify",
+          "auto-rollback"
+        ]
+      },
+      {
+        "id": "grafana",
+        "label": "Grafana",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Dashboards for golden signals and release health.",
+        "findingsCount": 0,
+        "dependencies": [
+          "prometheus"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "azmonitor",
+        "label": "Azure Monitor",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Platform metrics, activity logs, alert routing.",
+        "findingsCount": 0,
+        "dependencies": [
+          "aks"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "loganalytics",
+        "label": "Log Analytics",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Centralized logs with 90-day retention and sensitive-data redaction.",
+        "findingsCount": 0,
+        "dependencies": [
+          "azmonitor"
+        ],
+        "relatedStageDefinitionIds": []
+      },
+      {
+        "id": "appinsights",
+        "label": "Application Insights",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Distributed tracing and dependency maps.",
+        "findingsCount": 0,
+        "dependencies": [
+          "azmonitor"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "azpolicy",
+        "label": "Azure Policy",
+        "kind": "governance",
+        "status": "healthy",
+        "owner": "Security Engineering",
+        "description": "Deny-by-default guardrails; policy-as-code evaluated in pipeline.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "tf-policy",
+          "iam-review"
+        ]
+      },
+      {
+        "id": "defender",
+        "label": "Defender for Cloud",
+        "kind": "security",
+        "status": "warning",
+        "owner": "Security Engineering",
+        "description": "CSPM and workload protection; findings feed the command center.",
+        "findingsCount": 3,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "image-scan"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "github",
+        "target": "actions",
+        "label": "triggers"
+      },
+      {
+        "id": "e2",
+        "source": "actions",
+        "target": "terraform",
+        "label": "plan/apply"
+      },
+      {
+        "id": "e3",
+        "source": "actions",
+        "target": "acr",
+        "label": "push image"
+      },
+      {
+        "id": "e4",
+        "source": "github",
+        "target": "argocd",
+        "label": "desired state"
+      },
+      {
+        "id": "e5",
+        "source": "argocd",
+        "target": "aks",
+        "label": "sync"
+      },
+      {
+        "id": "e6",
+        "source": "acr",
+        "target": "aks",
+        "label": "pull"
+      },
+      {
+        "id": "e7",
+        "source": "entra",
+        "target": "aks",
+        "label": "workload identity"
+      },
+      {
+        "id": "e8",
+        "source": "keyvault",
+        "target": "aks",
+        "label": "secrets (CSI)"
+      },
+      {
+        "id": "e9",
+        "source": "aks",
+        "target": "prometheus",
+        "label": "metrics"
+      },
+      {
+        "id": "e10",
+        "source": "prometheus",
+        "target": "grafana",
+        "label": "dashboards"
+      },
+      {
+        "id": "e11",
+        "source": "aks",
+        "target": "azmonitor",
+        "label": "platform logs"
+      },
+      {
+        "id": "e12",
+        "source": "azmonitor",
+        "target": "loganalytics",
+        "label": "ingest"
+      },
+      {
+        "id": "e13",
+        "source": "azmonitor",
+        "target": "appinsights",
+        "label": "traces"
+      },
+      {
+        "id": "e14",
+        "source": "azpolicy",
+        "target": "aks",
+        "label": "guardrails"
+      },
+      {
+        "id": "e15",
+        "source": "defender",
+        "target": "aks",
+        "label": "protection"
+      },
+      {
+        "id": "e16",
+        "source": "terraform",
+        "target": "keyvault",
+        "label": "provisions"
+      }
+    ]
+  },
+  {
+    "id": "arch-app-reporting",
+    "applicationId": "app-reporting",
+    "nodes": [
+      {
+        "id": "github",
+        "label": "GitHub Repository",
+        "kind": "scm",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "Source of truth with branch protection and required reviews.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "pr-opened",
+          "checkout"
+        ]
+      },
+      {
+        "id": "actions",
+        "label": "GitHub Actions",
+        "kind": "ci",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "CI pipeline with OIDC federation to Azure — no long-lived secrets.",
+        "findingsCount": 0,
+        "dependencies": [
+          "github"
+        ],
+        "relatedStageDefinitionIds": [
+          "lint",
+          "unit-tests",
+          "image-build"
+        ]
+      },
+      {
+        "id": "terraform",
+        "label": "Terraform",
+        "kind": "iac",
+        "status": "warning",
+        "owner": "Platform Engineering",
+        "description": "Modular IaC with remote state in Azure Storage and state locking.",
+        "findingsCount": 2,
+        "dependencies": [
+          "actions"
+        ],
+        "relatedStageDefinitionIds": [
+          "tf-plan",
+          "tf-policy",
+          "tf-apply"
+        ]
+      },
+      {
+        "id": "acr",
+        "label": "Azure Container Registry",
+        "kind": "registry",
+        "status": "healthy",
+        "owner": "Platform Engineering",
+        "description": "Private registry; images signed with Cosign, scanned by Trivy.",
+        "findingsCount": 1,
+        "dependencies": [
+          "actions"
+        ],
+        "relatedStageDefinitionIds": [
+          "publish",
+          "image-scan",
+          "sign"
+        ]
+      },
+      {
+        "id": "aks",
+        "label": "Azure Kubernetes Service",
+        "kind": "compute",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Private AKS cluster; workload identity, network policies enforced.",
+        "findingsCount": 2,
+        "dependencies": [
+          "acr",
+          "argocd"
+        ],
+        "relatedStageDefinitionIds": [
+          "deploy-dev",
+          "prod-deploy"
+        ]
+      },
+      {
+        "id": "argocd",
+        "label": "Argo CD",
+        "kind": "cd",
+        "status": "healthy",
+        "owner": "Release Engineering",
+        "description": "GitOps controller reconciling desired state from environment repos.",
+        "findingsCount": 0,
+        "dependencies": [
+          "github"
+        ],
+        "relatedStageDefinitionIds": [
+          "argo-sync"
+        ]
+      },
+      {
+        "id": "keyvault",
+        "label": "Azure Key Vault",
+        "kind": "secrets",
+        "status": "warning",
+        "owner": "Security Engineering",
+        "description": "Secrets and certificates; access via managed identity only.",
+        "findingsCount": 1,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "iam-review"
+        ]
+      },
+      {
+        "id": "entra",
+        "label": "Microsoft Entra ID",
+        "kind": "identity",
+        "status": "healthy",
+        "owner": "Identity Platform",
+        "description": "Workload identities, RBAC assignments, conditional access.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "iam-review"
+        ]
+      },
+      {
+        "id": "prometheus",
+        "label": "Prometheus",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Cluster metrics; SLO burn-rate alerts drive automated rollback.",
+        "findingsCount": 0,
+        "dependencies": [
+          "aks"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify",
+          "auto-rollback"
+        ]
+      },
+      {
+        "id": "grafana",
+        "label": "Grafana",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Dashboards for golden signals and release health.",
+        "findingsCount": 0,
+        "dependencies": [
+          "prometheus"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "azmonitor",
+        "label": "Azure Monitor",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Platform metrics, activity logs, alert routing.",
+        "findingsCount": 0,
+        "dependencies": [
+          "aks"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "loganalytics",
+        "label": "Log Analytics",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Centralized logs with 90-day retention and sensitive-data redaction.",
+        "findingsCount": 0,
+        "dependencies": [
+          "azmonitor"
+        ],
+        "relatedStageDefinitionIds": []
+      },
+      {
+        "id": "appinsights",
+        "label": "Application Insights",
+        "kind": "observability",
+        "status": "healthy",
+        "owner": "SRE",
+        "description": "Distributed tracing and dependency maps.",
+        "findingsCount": 0,
+        "dependencies": [
+          "azmonitor"
+        ],
+        "relatedStageDefinitionIds": [
+          "post-verify"
+        ]
+      },
+      {
+        "id": "azpolicy",
+        "label": "Azure Policy",
+        "kind": "governance",
+        "status": "healthy",
+        "owner": "Security Engineering",
+        "description": "Deny-by-default guardrails; policy-as-code evaluated in pipeline.",
+        "findingsCount": 0,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "tf-policy",
+          "iam-review"
+        ]
+      },
+      {
+        "id": "defender",
+        "label": "Defender for Cloud",
+        "kind": "security",
+        "status": "warning",
+        "owner": "Security Engineering",
+        "description": "CSPM and workload protection; findings feed the command center.",
+        "findingsCount": 3,
+        "dependencies": [],
+        "relatedStageDefinitionIds": [
+          "image-scan"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "github",
+        "target": "actions",
+        "label": "triggers"
+      },
+      {
+        "id": "e2",
+        "source": "actions",
+        "target": "terraform",
+        "label": "plan/apply"
+      },
+      {
+        "id": "e3",
+        "source": "actions",
+        "target": "acr",
+        "label": "push image"
+      },
+      {
+        "id": "e4",
+        "source": "github",
+        "target": "argocd",
+        "label": "desired state"
+      },
+      {
+        "id": "e5",
+        "source": "argocd",
+        "target": "aks",
+        "label": "sync"
+      },
+      {
+        "id": "e6",
+        "source": "acr",
+        "target": "aks",
+        "label": "pull"
+      },
+      {
+        "id": "e7",
+        "source": "entra",
+        "target": "aks",
+        "label": "workload identity"
+      },
+      {
+        "id": "e8",
+        "source": "keyvault",
+        "target": "aks",
+        "label": "secrets (CSI)"
+      },
+      {
+        "id": "e9",
+        "source": "aks",
+        "target": "prometheus",
+        "label": "metrics"
+      },
+      {
+        "id": "e10",
+        "source": "prometheus",
+        "target": "grafana",
+        "label": "dashboards"
+      },
+      {
+        "id": "e11",
+        "source": "aks",
+        "target": "azmonitor",
+        "label": "platform logs"
+      },
+      {
+        "id": "e12",
+        "source": "azmonitor",
+        "target": "loganalytics",
+        "label": "ingest"
+      },
+      {
+        "id": "e13",
+        "source": "azmonitor",
+        "target": "appinsights",
+        "label": "traces"
+      },
+      {
+        "id": "e14",
+        "source": "azpolicy",
+        "target": "aks",
+        "label": "guardrails"
+      },
+      {
+        "id": "e15",
+        "source": "defender",
+        "target": "aks",
+        "label": "protection"
+      },
+      {
+        "id": "e16",
+        "source": "terraform",
+        "target": "keyvault",
+        "label": "provisions"
+      }
+    ]
+  }
+]
