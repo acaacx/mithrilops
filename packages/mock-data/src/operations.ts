@@ -1,6 +1,6 @@
 import type { AuditEvent, Integration, RemediationTask, RiskException } from "@secureflow/types";
 
-const now = Date.now();
+import { now } from "./clock";
 const hoursAgo = (n: number) => new Date(now - n * 3_600_000).toISOString();
 const daysAgo = (n: number) => new Date(now - n * 86_400_000).toISOString();
 const daysAhead = (n: number) => new Date(now + n * 86_400_000).toISOString();

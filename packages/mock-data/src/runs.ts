@@ -8,7 +8,7 @@ import type {
 } from "@secureflow/types";
 import { STAGE_DEFINITIONS, STAGE_OWNERS } from "./stage-definitions";
 
-const now = Date.now();
+import { now } from "./clock";
 const hoursAgo = (n: number) => new Date(now - n * 3_600_000).toISOString();
 
 /** Deterministic pseudo-durations per stage index (seconds). */

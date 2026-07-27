@@ -4,6 +4,7 @@
 
 - Node.js ≥ 20 (tested on 25)
 - pnpm ≥ 9 (`corepack enable pnpm`)
+- [uv](https://docs.astral.sh/uv/) + Python ≥ 3.12 (only for the API scaffold; uv can install Python itself)
 - Terraform ≥ 1.9 (only for infrastructure work)
 
 ## Setup
@@ -11,6 +12,8 @@
 ```bash
 pnpm install
 pnpm dev              # web on http://localhost:5173
+
+uv sync               # one-time: creates .venv from uv.lock
 pnpm dev:api          # optional API on http://localhost:4000
 ```
 
@@ -20,6 +23,7 @@ pnpm dev:api          # optional API on http://localhost:4000
 pnpm lint             # eslint (web)
 pnpm typecheck        # strict tsc across workspaces
 pnpm test             # vitest (28 unit/component tests)
+pnpm test:api         # pytest (9 API tests, via uv)
 pnpm --filter @secureflow/web test:watch
 pnpm e2e              # playwright; first time: npx playwright install chromium
 pnpm build            # production build

@@ -1,6 +1,6 @@
 import type { Deployment } from "@secureflow/types";
 
-const now = Date.now();
+import { now } from "./clock";
 const hoursAgo = (n: number) => new Date(now - n * 3_600_000).toISOString();
 
 export const deployments: Deployment[] = [

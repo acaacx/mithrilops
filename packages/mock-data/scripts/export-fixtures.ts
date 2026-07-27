@@ -3,10 +3,17 @@
  * (apps/api/data). Run after changing any mock data:
  *
  *   pnpm --filter @secureflow/mock-data export:fixtures
+ *
+ * Time origin is pinned via MOCK_NOW so output is deterministic — rerunning
+ * without data changes produces no git diff. The dataset must be imported
+ * after the pin, hence the dynamic import.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import {
+
+process.env.MOCK_NOW = String(Date.parse("2026-07-27T00:00:00.000Z"));
+
+const {
   applications,
   auditEvents,
   complianceFrameworks,
@@ -14,7 +21,7 @@ import {
   infrastructurePlans,
   pipelineRuns,
   securityFindings,
-} from "../src/index";
+} = await import("../src/index");
 
 const out = fileURLToPath(new URL("../../../apps/api/data/", import.meta.url));
 mkdirSync(out, { recursive: true });

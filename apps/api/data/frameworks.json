@@ -18,8 +18,8 @@
         "relatedStageDefinitionId": "iam-review",
         "relatedFindingIds": [],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "owasp-top-10-A02",
@@ -33,8 +33,8 @@
         ],
         "relatedFindingIds": [],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "owasp-top-10-A03",
@@ -51,8 +51,8 @@
           "find-sast-sqli"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "owasp-top-10-A06",
@@ -68,8 +68,8 @@
           "find-dep-axios"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "owasp-top-10-A07",
@@ -85,8 +85,8 @@
           "find-secret-notify"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       }
     ]
   },
@@ -109,8 +109,8 @@
           "find-root-container"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "cis-benchmarks-5.4.1",
@@ -124,8 +124,8 @@
           "find-missing-limits"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "cis-benchmarks-6.2",
@@ -140,8 +140,8 @@
           "find-sg-open"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       }
     ]
   },
@@ -164,8 +164,8 @@
           "find-missing-sbom"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "nist-csf-PR.PS-06",
@@ -182,8 +182,8 @@
           "find-unsigned-image"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "nist-csf-PR.AA-05",
@@ -197,8 +197,8 @@
           "find-iam-wide"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       }
     ]
   },
@@ -222,8 +222,8 @@
           "find-missing-encryption"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "iso-27001-A.8.12",
@@ -237,8 +237,8 @@
           "find-storage-public"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "iso-27001-A.8.2",
@@ -252,8 +252,8 @@
           "find-iam-wide"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       }
     ]
   },
@@ -276,8 +276,8 @@
           "find-secret-notify"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "soc-2-CC6.6",
@@ -291,8 +291,8 @@
           "find-storage-public"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "soc-2-CC8.1",
@@ -307,8 +307,8 @@
         "relatedStageDefinitionId": "prod-approval",
         "relatedFindingIds": [],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       }
     ]
   },
@@ -331,8 +331,8 @@
           "find-dep-axios"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "pci-dss-8.3.4",
@@ -346,8 +346,8 @@
           "find-dast-auth"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "pci-dss-10.2",
@@ -361,8 +361,8 @@
         ],
         "relatedFindingIds": [],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       }
     ]
   },
@@ -386,8 +386,8 @@
           "find-storage-public"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "azure-security-benchmark-PA-7",
@@ -401,8 +401,8 @@
           "find-iam-wide"
         ],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       },
       {
         "id": "azure-security-benchmark-PV-6",
@@ -417,8 +417,8 @@
         "relatedStageDefinitionId": "image-scan",
         "relatedFindingIds": [],
         "ownerUserId": "u-aiko",
-        "lastValidatedAt": "2026-07-21T08:25:05.269Z",
-        "nextReviewAt": "2026-10-19T08:25:05.269Z"
+        "lastValidatedAt": "2026-07-21T00:00:00.000Z",
+        "nextReviewAt": "2026-10-19T00:00:00.000Z"
       }
     ]
   }

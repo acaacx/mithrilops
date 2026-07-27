@@ -1,6 +1,6 @@
 import type { Application, ArchitectureDiagram, Incident } from "@secureflow/types";
 
-const now = Date.now();
+import { now } from "./clock";
 const hours = (n: number) => new Date(now - n * 3_600_000).toISOString();
 
 export const applications: Application[] = [
