@@ -9,13 +9,19 @@
 
 ## Setup
 
+HTTP is the default data mode, so the SPA needs the API running to be functional.
+Run both processes:
+
 ```bash
 pnpm install
-pnpm dev              # web on http://localhost:5173
-
 uv sync               # one-time: creates .venv from uv.lock
-pnpm dev:api          # optional API on http://localhost:4000
+
+pnpm dev:api          # FastAPI on http://localhost:4000
+pnpm dev              # web on http://localhost:5173
 ```
+
+Want to skip the API entirely? See [Data modes](#data-modes) below for the
+in-browser `memory` mode.
 
 ## Everyday loops
 
@@ -48,6 +54,13 @@ The SPA reads `VITE_DATA_SOURCE` at build/dev time:
 
 vitest and the default Playwright suite pin `memory`; `pnpm e2e:http` boots
 both servers and smoke-tests the HTTP path.
+
+Two views still read the in-memory seed data directly instead of going through
+a provider, so they show fixed seed content regardless of server state even in
+`http` mode: the run-detail page's approvals panel (`pipeline-run.tsx`) and the
+AI insights panel's underlying data lookups (`lib/ai/ai-service.ts`, which reads
+`mockState.runs`/`findings`). Both are follow-up scope — see the Conventions
+note below.
 
 ## Demo tips
 
