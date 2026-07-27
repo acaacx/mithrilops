@@ -2,27 +2,46 @@
 
 ## System shape
 
-```
-┌────────────────────────────────────────────────────────────┐
-│ apps/web (SPA)                                             │
-│  pages → components → lib/queries (TanStack Query)         │
-│                └── lib/providers (interfaces)              │
-│                      └── mock implementations (today)      │
-│                      └── HTTP implementations (future)     │
-│  lib/realtime/simulator — timer-driven event feed          │
-│  lib/ai/ai-service — simulated AIService implementation    │
-│  stores/ — zustand: session (role/env/theme), notifications│
-└────────────────────────────────────────────────────────────┘
-┌────────────────────────────────────────────────────────────┐
-│ apps/api (FastAPI, uv-managed Python workspace)            │
-│  /api/* mock endpoints + /api/events SSE                   │
-│  extension points: Entra JWT auth, SQLAlchemy/Postgres,    │
-│  Redis                                                     │
-└────────────────────────────────────────────────────────────┘
-┌────────────────────────────────────────────────────────────┐
-│ packages/types — domain model + provider contracts + zod   │
-│ packages/mock-data — deterministic seeds (shared)          │
-└────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph web["apps/web — React SPA (Vite, Tailwind v4)"]
+        pages["pages / components"]
+        queries["lib/queries — TanStack Query"]
+        providers["lib/providers — provider interfaces<br/>mock implementations (today)<br/>HTTP implementations (planned)"]
+        realtime["lib/realtime/simulator — timer-driven event feed"]
+        ai["lib/ai/ai-service — simulated AIService"]
+        stores["stores — zustand: session (role/env/theme), notifications"]
+        pages --> queries --> providers
+        queries --> ai
+        realtime -. "invalidates query keys" .-> queries
+        pages --> stores
+    end
+
+    subgraph api["apps/api — FastAPI (uv-managed Python workspace)"]
+        endpoints["/api/* endpoints"]
+        sse["/api/events — SSE stream"]
+        fixtures["data/*.json fixtures<br/>(validated by Pydantic models)"]
+        endpoints --> fixtures
+    end
+
+    subgraph packages["packages (shared TypeScript)"]
+        types["types — domain model,<br/>provider contracts, zod schemas"]
+        mockdata["mock-data — deterministic seeds<br/>(MOCK_NOW-pinned clock)"]
+    end
+
+    providers -. "HTTP mode (planned):<br/>fetch /api/* + SSE" .-> endpoints
+    providers -. planned .-> sse
+    mockdata -- "export:fixtures" --> fixtures
+    providers --> mockdata
+    web --> types
+    mockdata --> types
+
+    subgraph azure["Azure (Terraform)"]
+        swa["Static Web App (SPA)"]
+        aca["Container Apps (API)"]
+        paas["PostgreSQL · Redis · Key Vault · ACR<br/>(private endpoints, managed identities)"]
+        swa --> aca --> paas
+    end
 ```
 
 ## Key decisions
