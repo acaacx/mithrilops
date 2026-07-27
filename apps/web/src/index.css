@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --canvas: #f4f6fa;
+  --surface: #ffffff;
+  --surface-2: #eef1f7;
+  --surface-3: #e4e9f2;
+  --line: #dbe1ec;
+  --line-strong: #c3ccdd;
+  --fg: #17202f;
+  --fg-muted: #55617a;
+  --fg-faint: #8a94aa;
+  --accent: #0d9488;
+  --accent-strong: #0f766e;
+  --accent-fg: #ffffff;
+  --ok: #059669;
+  --warn: #b45309;
+  --danger: #dc2626;
+  --info: #2563eb;
+  --blocked: #7c3aed;
+  --pending: #64748b;
+  --critical: #b91c1c;
+  --high: #dc2626;
+  --medium: #b45309;
+  --low: #2563eb;
+  --informational: #64748b;
+}
+
+.dark {
+  --canvas: #0a0e16;
+  --surface: #101624;
+  --surface-2: #151d2e;
+  --surface-3: #1b2439;
+  --line: #232e48;
+  --line-strong: #33415f;
+  --fg: #e9edf6;
+  --fg-muted: #97a1b8;
+  --fg-faint: #5d6880;
+  --accent: #2dd4bf;
+  --accent-strong: #14b8a6;
+  --accent-fg: #042f2a;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --info: #60a5fa;
+  --blocked: #c084fc;
+  --pending: #7c8699;
+  --critical: #f87171;
+  --high: #fb923c;
+  --medium: #fbbf24;
+  --low: #60a5fa;
+  --informational: #7c8699;
+}
+
+@theme inline {
+  --font-sans: "IBM Plex Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-faint: var(--fg-faint);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-fg: var(--accent-fg);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-blocked: var(--blocked);
+  --color-pending: var(--pending);
+  --color-critical: var(--critical);
+  --color-high: var(--high);
+  --color-medium: var(--medium);
+  --color-low: var(--low);
+  --color-informational: var(--informational);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-canvas text-fg font-sans antialiased;
+  font-size: 14px;
+}
+
+/* Subtle blueprint grid on the app canvas */
+.canvas-grid {
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--line) 34%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--line) 34%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Thin scrollbars for dense panels */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise-in {
+  animation: rise-in 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+/* React Flow theme overrides */
+.react-flow__attribution {
+  background: transparent;
+  color: var(--fg-faint);
+}
+.react-flow__controls {
+  box-shadow: none;
+}
+.react-flow__controls button {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  color: var(--fg-muted);
+}
+.react-flow__controls button:hover {
+  background: var(--surface-3);
+}
+.react-flow__edge-path {
+  stroke: var(--line-strong);
+}
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke: var(--accent);
+}

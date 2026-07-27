@@ -1,0 +1,42 @@
+import type { PipelineStageDefinition } from "@secureflow/types";
+
+export const STAGE_DEFINITIONS: PipelineStageDefinition[] = [
+  { id: "pr-opened", name: "Pull request opened", tool: "GitHub", gate: false, phase: "ci" },
+  { id: "checkout", name: "Source checkout", tool: "GitHub Actions", gate: false, phase: "ci" },
+  { id: "restore", name: "Dependency restore", tool: "pnpm", gate: false, phase: "ci" },
+  { id: "lint", name: "Linting", tool: "ESLint", gate: true, phase: "ci" },
+  { id: "unit-tests", name: "Unit testing", tool: "Vitest", gate: true, phase: "ci" },
+  { id: "secret-scan", name: "Secret scanning", tool: "Gitleaks", gate: true, phase: "security" },
+  { id: "sca", name: "Software composition analysis", tool: "Snyk", gate: true, phase: "security" },
+  { id: "sast", name: "Code quality & SAST", tool: "SonarQube", gate: true, phase: "security" },
+  { id: "checkov", name: "Checkov Terraform scan", tool: "Checkov", gate: true, phase: "security" },
+  { id: "tfsec", name: "Configuration scan", tool: "tfsec", gate: true, phase: "security" },
+  { id: "iam-review", name: "Identity & access review", tool: "Azure Policy", gate: true, phase: "security" },
+  { id: "image-build", name: "Container image build", tool: "Docker Buildx", gate: false, phase: "artifact" },
+  { id: "image-scan", name: "Image vulnerability scan", tool: "Trivy", gate: true, phase: "security" },
+  { id: "sbom", name: "SBOM generation", tool: "Syft", gate: true, phase: "artifact" },
+  { id: "sign", name: "Image signing", tool: "Cosign", gate: true, phase: "artifact" },
+  { id: "publish", name: "Publish to ACR", tool: "Azure Container Registry", gate: false, phase: "artifact" },
+  { id: "tf-plan", name: "Terraform plan", tool: "Terraform", gate: false, phase: "infrastructure" },
+  { id: "tf-policy", name: "Terraform policy validation", tool: "Azure Policy", gate: true, phase: "infrastructure" },
+  { id: "manual-approval", name: "Manual approval", tool: "SecureFlow", gate: true, phase: "infrastructure" },
+  { id: "tf-apply", name: "Terraform apply", tool: "Terraform", gate: false, phase: "infrastructure" },
+  { id: "argo-sync", name: "Argo CD synchronization", tool: "Argo CD", gate: false, phase: "deploy" },
+  { id: "deploy-dev", name: "Deploy to development", tool: "Argo CD", gate: false, phase: "deploy" },
+  { id: "smoke-tests", name: "Integration & smoke tests", tool: "Playwright", gate: true, phase: "verify" },
+  { id: "promote-staging", name: "Promotion to staging", tool: "Argo CD", gate: false, phase: "deploy" },
+  { id: "dast", name: "DAST testing", tool: "OWASP ZAP", gate: true, phase: "security" },
+  { id: "prod-approval", name: "Production approval", tool: "SecureFlow", gate: true, phase: "deploy" },
+  { id: "prod-deploy", name: "Canary production deployment", tool: "Argo CD", gate: false, phase: "deploy" },
+  { id: "post-verify", name: "Post-deployment verification", tool: "Prometheus", gate: true, phase: "verify" },
+  { id: "auto-rollback", name: "Automated rollback on SLO breach", tool: "Argo Rollouts", gate: false, phase: "verify" },
+];
+
+export const STAGE_OWNERS: Record<PipelineStageDefinition["phase"], string> = {
+  ci: "Platform Engineering",
+  security: "Security Engineering",
+  artifact: "Platform Engineering",
+  infrastructure: "Platform Engineering",
+  deploy: "Release Engineering",
+  verify: "SRE",
+};
