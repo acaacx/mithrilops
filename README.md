@@ -46,9 +46,9 @@ pnpm dev:api      # → http://localhost:4000/health
 ## What's inside
 
 - **Executive overview** — DORA metrics, vulnerability trends, incidents, AI portfolio summary.
-- **Applications** — five seeded services with posture scores → per-app workspace with 10 tabs (pipeline, architecture, security, infrastructure, deployments, compliance, observability, activity, settings).
+- **Applications** — five seeded services with posture scores → per-app workspace with 10 tabs (overview, pipeline, architecture, security, infrastructure, deployments, compliance, observability, activity, settings).
 - **Pipelines** — searchable run table → run detail with an interactive 29-stage React Flow graph, per-stage logs/findings/evidence/retry, approvals, AI failure analysis, and deployment-risk score.
-- **Security command center** — filterable findings (13 realistic seeds: hardcoded secret, critical container CVE, public storage, permissive IAM, KV public access, root container, missing limits, DAST auth gap, …) with framework mappings, SLA tracking, risk acceptance, and false-positive triage.
+- **Security command center** — filterable findings (14 realistic seeds: hardcoded secret, critical container CVE, public storage, permissive IAM, KV public access, root container, missing limits, DAST auth gap, …) with framework mappings, SLA tracking, risk acceptance, and false-positive triage.
 - **Infrastructure** — Terraform plan review: add/change/destroy, cost delta, policy violations, drift, module versions, side-by-side previous/proposed diff, AI risk summary.
 - **Deployments** — dev → test → staging → production progression with Argo CD sync state, canary/blue-green visuals, RBAC-gated promote and rollback.
 - **Compliance center** — OWASP / CIS / NIST CSF / ISO 27001 / SOC 2 / PCI DSS / Azure Security Benchmark with controls, evidence (SHA-256-sealed), related stages and findings.
@@ -77,7 +77,7 @@ docs/             Architecture, security model, threat model, integrations, depl
 
 ## Environment variables
 
-See [.env.example](.env.example). The web app needs none by default (`VITE_DATA_SOURCE=mock`). No secrets belong in this repository — production secrets flow through Azure Key Vault + managed identity.
+See [.env.example](.env.example). The web app needs none by default; the `VITE_*` entries are reserved for the future HTTP-provider switch (see [docs/integrations.md](docs/integrations.md)) and are not read yet. No secrets belong in this repository — production secrets flow through Azure Key Vault + managed identity.
 
 ## Security model (implemented vs simulated)
 

@@ -21,7 +21,7 @@ export function createHttpPipelineProvider(baseUrl: string): PipelineProvider {
 }
 ```
 
-Switch on `VITE_DATA_SOURCE=api` in the provider registry.
+Then add a `VITE_DATA_SOURCE` switch in the provider registry (`apps/web/src/lib/providers/index.ts`) — the env var is reserved in `.env.example` but nothing reads it yet; today the registry always uses the mock implementations.
 
 ## Mapping table
 
