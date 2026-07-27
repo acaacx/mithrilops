@@ -2,7 +2,6 @@
 
 from datetime import datetime, timedelta
 
-from .data import pipeline_runs
 from .models import PipelineLogLine, PipelineRun, PipelineStage
 
 
@@ -10,14 +9,11 @@ def _iso(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%S.") + f"{dt.microsecond // 1000:03d}Z"
 
 
-def stage_logs(run_id: str, stage_definition_id: str) -> list[PipelineLogLine]:
-    run: PipelineRun | None = next((r for r in pipeline_runs() if r.id == run_id), None)
-    stage: PipelineStage | None = (
-        next((s for s in run.stages if s.definition_id == stage_definition_id), None)
-        if run
-        else None
+def stage_logs(run: PipelineRun, stage_definition_id: str) -> list[PipelineLogLine]:
+    stage: PipelineStage | None = next(
+        (s for s in run.stages if s.definition_id == stage_definition_id), None
     )
-    if not run or not stage or not stage.started_at:
+    if not stage or not stage.started_at:
         return []
     t0 = datetime.fromisoformat(stage.started_at.replace("Z", "+00:00"))
 

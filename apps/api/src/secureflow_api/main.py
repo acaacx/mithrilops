@@ -19,7 +19,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from . import data
+from . import state
 from .logs import stage_logs
 from .models import (
     Application,
@@ -68,12 +68,12 @@ async def health() -> dict[str, str]:
 
 @app.get("/api/applications")
 async def list_applications() -> list[Application]:
-    return data.applications()
+    return state.get_state().applications
 
 
 @app.get("/api/applications/{app_id}")
 async def get_application(app_id: str) -> Application:
-    found = next((a for a in data.applications() if a.id == app_id), None)
+    found = next((a for a in state.get_state().applications if a.id == app_id), None)
     if not found:
         raise HTTPException(status_code=404, detail="application_not_found")
     return found
@@ -85,7 +85,7 @@ async def list_runs(
     status: PipelineRunStatus | None = None,
     environment: EnvironmentName | None = None,
 ) -> list[PipelineRun]:
-    runs = data.pipeline_runs()
+    runs = state.get_state().runs
     if application_id:
         runs = [r for r in runs if r.application_id == application_id]
     if status:
@@ -97,7 +97,7 @@ async def list_runs(
 
 @app.get("/api/runs/{run_id}")
 async def get_run(run_id: str) -> PipelineRun:
-    run = next((r for r in data.pipeline_runs() if r.id == run_id), None)
+    run = next((r for r in state.get_state().runs if r.id == run_id), None)
     if not run:
         raise HTTPException(status_code=404, detail="run_not_found")
     return run
@@ -105,40 +105,46 @@ async def get_run(run_id: str) -> PipelineRun:
 
 @app.get("/api/runs/{run_id}/stages/{stage_id}/logs")
 async def get_stage_logs(run_id: str, stage_id: str) -> list[PipelineLogLine]:
-    run = next((r for r in data.pipeline_runs() if r.id == run_id), None)
+    st = state.get_state()
+    run = next((r for r in st.runs if r.id == run_id), None)
     if not run:
         raise HTTPException(status_code=404, detail="run_not_found")
-    return stage_logs(run_id, stage_id)
+    stage = next(
+        (s for s in run.stages if s.id == stage_id or s.definition_id == stage_id), None
+    )
+    if not stage:
+        return []
+    return stage_logs(run, stage.definition_id)
 
 
 @app.get("/api/findings")
 async def list_findings() -> list[SecurityFinding]:
-    return data.security_findings()
+    return state.get_state().findings
 
 
 @app.get("/api/deployments")
 async def list_deployments() -> list[Deployment]:
-    return data.deployments()
+    return state.get_state().deployments
 
 
 @app.get("/api/plans")
 async def list_plans() -> list[InfrastructurePlan]:
-    return data.infrastructure_plans()
+    return state.get_state().plans
 
 
 @app.get("/api/frameworks")
 async def list_frameworks() -> list[ComplianceFramework]:
-    return data.compliance_frameworks()
+    return state.get_state().frameworks
 
 
 @app.get("/api/audit")
 async def list_audit() -> list[AuditEvent]:
-    return data.audit_events()
+    return state.get_state().audit
 
 
 @app.get("/api/findings/{finding_id}")
 async def get_finding(finding_id: str) -> SecurityFinding:
-    found = next((f for f in data.security_findings() if f.id == finding_id), None)
+    found = next((f for f in state.get_state().findings if f.id == finding_id), None)
     if not found:
         raise HTTPException(status_code=404, detail="finding_not_found")
     return found
@@ -146,7 +152,7 @@ async def get_finding(finding_id: str) -> SecurityFinding:
 
 @app.get("/api/plans/{plan_id}")
 async def get_plan(plan_id: str) -> InfrastructurePlan:
-    plan = next((p for p in data.infrastructure_plans() if p.id == plan_id), None)
+    plan = next((p for p in state.get_state().plans if p.id == plan_id), None)
     if not plan:
         raise HTTPException(status_code=404, detail="plan_not_found")
     return plan
@@ -154,7 +160,7 @@ async def get_plan(plan_id: str) -> InfrastructurePlan:
 
 @app.get("/api/frameworks/{framework_id}")
 async def get_framework(framework_id: str) -> ComplianceFramework:
-    fw = next((f for f in data.compliance_frameworks() if f.id == framework_id), None)
+    fw = next((f for f in state.get_state().frameworks if f.id == framework_id), None)
     if not fw:
         raise HTTPException(status_code=404, detail="framework_not_found")
     return fw
@@ -162,12 +168,12 @@ async def get_framework(framework_id: str) -> ComplianceFramework:
 
 @app.get("/api/integrations")
 async def list_integrations() -> list[Integration]:
-    return data.integrations()
+    return state.get_state().integrations
 
 
 @app.get("/api/architecture/{app_id}")
 async def get_architecture(app_id: str) -> ArchitectureDiagram:
-    diagram = next((d for d in data.architecture_diagrams() if d.application_id == app_id), None)
+    diagram = next((d for d in state.get_state().diagrams if d.application_id == app_id), None)
     if not diagram:
         raise HTTPException(status_code=404, detail="diagram_not_found")
     return diagram
