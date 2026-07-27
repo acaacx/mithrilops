@@ -12,12 +12,14 @@
     "lint": "echo 'mock-data: no lint target'",
     "typecheck": "tsc --noEmit",
     "test": "echo 'mock-data: no tests'",
-    "build": "echo 'mock-data: consumed from source'"
+    "build": "echo 'mock-data: consumed from source'",
+    "export:fixtures": "tsx scripts/export-fixtures.ts"
   },
   "dependencies": {
     "@secureflow/types": "workspace:*"
   },
   "devDependencies": {
+    "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }
 }

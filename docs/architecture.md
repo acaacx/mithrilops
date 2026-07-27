@@ -14,9 +14,10 @@
 │  stores/ — zustand: session (role/env/theme), notifications│
 └────────────────────────────────────────────────────────────┘
 ┌────────────────────────────────────────────────────────────┐
-│ apps/api (Fastify)                                         │
+│ apps/api (FastAPI, uv-managed Python workspace)            │
 │  /api/* mock endpoints + /api/events SSE                   │
-│  extension points: Entra JWT auth, Prisma/Postgres, Redis  │
+│  extension points: Entra JWT auth, SQLAlchemy/Postgres,    │
+│  Redis                                                     │
 └────────────────────────────────────────────────────────────┘
 ┌────────────────────────────────────────────────────────────┐
 │ packages/types — domain model + provider contracts + zod   │
