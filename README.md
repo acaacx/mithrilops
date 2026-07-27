@@ -58,53 +58,9 @@ pnpm dev:api      # → http://localhost:4000/health
 
 ## Architecture
 
-```mermaid
-flowchart TB
-    subgraph web["apps/web — React SPA (Vite, Tailwind v4)"]
-        pages["pages / components"]
-        queries["lib/queries — TanStack Query"]
-        providers["lib/providers — factory on VITE_DATA_SOURCE<br/>http implementations (default)<br/>mock implementations (memory mode)"]
-        realtime["lib/realtime — sse-client (http)<br/>simulator (memory)"]
-        ai["lib/ai/ai-service — simulated AIService"]
-        stores["stores — zustand: session (role/env/theme), notifications"]
-        pages --> queries --> providers
-        queries --> ai
-        realtime -. "invalidates query keys" .-> queries
-        pages --> stores
-    end
+![SecureFlow Control Center architecture](docs/diagrams/architecture.svg)
 
-    subgraph api["apps/api — FastAPI (uv-managed Python workspace)"]
-        endpoints["/api/* endpoints<br/>(GET + mutations)"]
-        sse["/api/events — SSE stream<br/>(run-updated, notification)"]
-        sim["server-side simulator<br/>(tick loop → broadcast)"]
-        state["in-memory state store<br/>seeded from fixtures"]
-        fixtures["data/*.json fixtures<br/>(validated by Pydantic models)"]
-        endpoints --> state --> fixtures
-        sim --> state
-        sim --> sse
-    end
-
-    subgraph packages["packages (shared TypeScript)"]
-        types["types — domain model,<br/>provider contracts, zod schemas"]
-        mockdata["mock-data — deterministic seeds<br/>(MOCK_NOW-pinned clock)"]
-    end
-
-    providers -- "http mode (default):<br/>fetch /api/* via Vite proxy" --> endpoints
-    sse -. "EventSource" .-> realtime
-    mockdata -- "export:fixtures" --> fixtures
-    providers --> mockdata
-    web --> types
-    mockdata --> types
-
-    subgraph azure["Azure (Terraform)"]
-        swa["Static Web App (SPA)"]
-        aca["Container Apps (API)"]
-        paas["PostgreSQL · Redis · Key Vault · ACR<br/>(private endpoints, managed identities)"]
-        swa --> aca --> paas
-    end
-```
-
-Details in [docs/architecture.md](docs/architecture.md).
+Details (including the mermaid source of this diagram) in [docs/architecture.md](docs/architecture.md).
 
 ## Repository structure
 
