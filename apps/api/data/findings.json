@@ -41,8 +41,8 @@
     ],
     "suppressionHistory": [],
     "ownerUserId": "u-tomas",
-    "slaDueDate": "2026-07-29T08:25:05.269Z",
-    "firstDetectedAt": "2026-07-26T08:25:05.269Z",
+    "slaDueDate": "2026-07-29T00:00:00.000Z",
+    "firstDetectedAt": "2026-07-26T00:00:00.000Z",
     "pipelineRunId": "run-2210",
     "blocksDeployment": true
   },
@@ -82,8 +82,8 @@
     ],
     "suppressionHistory": [],
     "ownerUserId": "u-tomas",
-    "slaDueDate": "2026-08-05T08:25:05.269Z",
-    "firstDetectedAt": "2026-07-23T08:25:05.269Z",
+    "slaDueDate": "2026-08-05T00:00:00.000Z",
+    "firstDetectedAt": "2026-07-23T00:00:00.000Z",
     "pipelineRunId": "run-2210",
     "blocksDeployment": false
   },
@@ -127,8 +127,8 @@
     ],
     "suppressionHistory": [],
     "ownerUserId": "u-derek",
-    "slaDueDate": "2026-07-28T08:25:05.269Z",
-    "firstDetectedAt": "2026-07-21T08:25:05.269Z",
+    "slaDueDate": "2026-07-28T00:00:00.000Z",
+    "firstDetectedAt": "2026-07-21T00:00:00.000Z",
     "blocksDeployment": true
   },
   {
@@ -168,8 +168,8 @@
     ],
     "suppressionHistory": [],
     "ownerUserId": "u-rowan",
-    "slaDueDate": "2026-08-14T08:25:05.269Z",
-    "firstDetectedAt": "2026-07-25T08:25:05.269Z",
+    "slaDueDate": "2026-08-14T00:00:00.000Z",
+    "firstDetectedAt": "2026-07-25T00:00:00.000Z",
     "pipelineRunId": "run-1482",
     "blocksDeployment": false
   },
@@ -212,8 +212,8 @@
     ],
     "suppressionHistory": [],
     "ownerUserId": "u-aiko",
-    "slaDueDate": "2026-07-27T20:25:05.269Z",
-    "firstDetectedAt": "2026-07-25T08:25:05.269Z",
+    "slaDueDate": "2026-07-27T12:00:00.000Z",
+    "firstDetectedAt": "2026-07-25T00:00:00.000Z",
     "blocksDeployment": true
   },
   {
@@ -254,8 +254,8 @@
     ],
     "suppressionHistory": [],
     "ownerUserId": "u-marcus",
-    "slaDueDate": "2026-08-02T08:25:05.269Z",
-    "firstDetectedAt": "2026-07-18T08:25:05.269Z",
+    "slaDueDate": "2026-08-02T00:00:00.000Z",
+    "firstDetectedAt": "2026-07-18T00:00:00.000Z",
     "blocksDeployment": false
   },
   {
@@ -294,8 +294,8 @@
     ],
     "suppressionHistory": [],
     "ownerUserId": "u-marcus",
-    "slaDueDate": "2026-08-07T08:25:05.269Z",
-    "firstDetectedAt": "2026-07-22T08:25:05.269Z",
+    "slaDueDate": "2026-08-07T00:00:00.000Z",
+    "firstDetectedAt": "2026-07-22T00:00:00.000Z",
     "blocksDeployment": false
   },
   {
@@ -334,8 +334,8 @@
     ],
     "suppressionHistory": [],
     "ownerUserId": "u-priya",
-    "slaDueDate": "2026-08-09T08:25:05.269Z",
-    "firstDetectedAt": "2026-07-22T08:25:05.269Z",
+    "slaDueDate": "2026-08-09T00:00:00.000Z",
+    "firstDetectedAt": "2026-07-22T00:00:00.000Z",
     "pipelineRunId": "run-0862",
     "blocksDeployment": true
   },
@@ -373,14 +373,14 @@
     ],
     "suppressionHistory": [
       {
-        "date": "2026-07-07T08:25:05.269Z",
+        "date": "2026-07-07T00:00:00.000Z",
         "by": "Derek Mensah",
         "reason": "Accepted until CMK platform rollout (REX-31), expires in 45 days."
       }
     ],
     "ownerUserId": "u-derek",
-    "slaDueDate": "2026-09-10T08:25:05.269Z",
-    "firstDetectedAt": "2026-06-23T08:25:05.269Z",
+    "slaDueDate": "2026-09-10T00:00:00.000Z",
+    "firstDetectedAt": "2026-06-23T00:00:00.000Z",
     "blocksDeployment": false
   },
   {
@@ -418,8 +418,8 @@
     ],
     "suppressionHistory": [],
     "ownerUserId": "u-aiko",
-    "slaDueDate": "2026-07-26T08:25:05.269Z",
-    "firstDetectedAt": "2026-07-19T08:25:05.269Z",
+    "slaDueDate": "2026-07-26T00:00:00.000Z",
+    "firstDetectedAt": "2026-07-19T00:00:00.000Z",
     "blocksDeployment": false
   },
   {
@@ -450,8 +450,8 @@
     "evidence": [],
     "suppressionHistory": [],
     "ownerUserId": "u-aiko",
-    "slaDueDate": "2026-09-05T08:25:05.269Z",
-    "firstDetectedAt": "2026-07-12T08:25:05.269Z",
+    "slaDueDate": "2026-09-05T00:00:00.000Z",
+    "firstDetectedAt": "2026-07-12T00:00:00.000Z",
     "blocksDeployment": false
   },
   {
@@ -488,8 +488,8 @@
     ],
     "suppressionHistory": [],
     "ownerUserId": "u-tomas",
-    "slaDueDate": "2026-08-03T08:25:05.269Z",
-    "firstDetectedAt": "2026-07-24T08:25:05.269Z",
+    "slaDueDate": "2026-08-03T00:00:00.000Z",
+    "firstDetectedAt": "2026-07-24T00:00:00.000Z",
     "blocksDeployment": false
   },
   {
@@ -524,8 +524,8 @@
     ],
     "suppressionHistory": [],
     "ownerUserId": "u-derek",
-    "slaDueDate": "2026-08-17T08:25:05.269Z",
-    "firstDetectedAt": "2026-07-15T08:25:05.269Z",
+    "slaDueDate": "2026-08-17T00:00:00.000Z",
+    "firstDetectedAt": "2026-07-15T00:00:00.000Z",
     "blocksDeployment": false
   },
   {
@@ -560,14 +560,14 @@
     ],
     "suppressionHistory": [
       {
-        "date": "2026-07-17T08:25:05.269Z",
+        "date": "2026-07-17T00:00:00.000Z",
         "by": "Priya Natarajan",
         "reason": "Confirmed FP — enum-mapped value; refactor tracked as REM-3098."
       }
     ],
     "ownerUserId": "u-tomas",
-    "slaDueDate": "2026-08-26T08:25:05.269Z",
-    "firstDetectedAt": "2026-07-13T08:25:05.269Z",
+    "slaDueDate": "2026-08-26T00:00:00.000Z",
+    "firstDetectedAt": "2026-07-13T00:00:00.000Z",
     "blocksDeployment": false
   }
 ]

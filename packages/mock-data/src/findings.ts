@@ -1,6 +1,6 @@
 import type { SecurityFinding } from "@secureflow/types";
 
-const now = Date.now();
+import { now } from "./clock";
 const daysAgo = (n: number) => new Date(now - n * 86_400_000).toISOString();
 const daysAhead = (n: number) => new Date(now + n * 86_400_000).toISOString();
 
