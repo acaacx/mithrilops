@@ -1,7 +1,7 @@
 import { lazy, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "sonner";
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster, toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { TooltipProvider } from "@/components/ui/misc";
 import { dataSource } from "@/lib/providers";
@@ -30,6 +30,24 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
+  // Global error surface for HTTP mode: any query or mutation that fails
+  // (e.g. the API is unreachable) shows a toast instead of failing silently.
+  // Mutation-level onError handlers are intentionally not used elsewhere to
+  // avoid double-toasting — this is the single layer for mutation errors.
+  queryCache: new QueryCache({
+    onError: (error) => {
+      toast.error("Failed to load data", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      toast.error("Action failed", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    },
+  }),
 });
 
 export function App() {
