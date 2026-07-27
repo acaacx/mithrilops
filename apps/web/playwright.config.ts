@@ -13,5 +13,6 @@ export default defineConfig({
     url: "http://localhost:5173",
     reuseExistingServer: true,
     timeout: 60_000,
+    env: { VITE_DATA_SOURCE: "memory" },
   },
 });
