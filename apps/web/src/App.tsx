@@ -4,7 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { TooltipProvider } from "@/components/ui/misc";
+import { dataSource } from "@/lib/providers";
 import { startPipelineSimulator } from "@/lib/realtime/simulator";
+import { startEventStream } from "@/lib/realtime/sse-client";
 
 const OverviewPage = lazy(() => import("@/pages/overview"));
 const ApplicationsPage = lazy(() => import("@/pages/applications"));
@@ -31,7 +33,13 @@ export const queryClient = new QueryClient({
 });
 
 export function App() {
-  useEffect(() => startPipelineSimulator(queryClient), []);
+  useEffect(
+    () =>
+      dataSource === "memory"
+        ? startPipelineSimulator(queryClient)
+        : startEventStream(queryClient),
+    [],
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
