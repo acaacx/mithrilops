@@ -2,23 +2,20 @@
 
 An AI-native DevSecOps pipeline governance and orchestration platform. Platform, security, development, and compliance teams get one place to express deployment intent, review generated architectures and pipelines, validate security and compliance gates, approve releases, and promote them through environments.
 
-> **Honesty note:** this first version runs entirely on **deterministic mock providers and a simulated AI service**. Every integration (GitHub, Argo CD, scanners, Azure, the AI) sits behind a clean adapter interface so real endpoints can be plugged in without touching UI code. Nothing in the UI claims to be live when it is not — simulated surfaces are labeled.
+> **Honesty note:** every external integration (GitHub, Argo CD, scanners, Azure, the AI) is **simulated over a deterministic mock dataset** — served by the FastAPI backend in the default HTTP mode, or fully in-browser in memory mode. Each sits behind a clean adapter interface so real endpoints can be plugged in without touching UI code. Nothing in the UI claims to be live when it is not — simulated surfaces are labeled.
 
 ## Quick start
 
 ```bash
 pnpm install
-pnpm dev          # → http://localhost:5173
+uv sync           # one-time: creates .venv from uv.lock (needs uv, https://docs.astral.sh/uv/)
+pnpm dev:api      # → http://localhost:4000/health (FastAPI + SSE)
+pnpm dev          # → http://localhost:5173 (proxies /api → :4000)
 ```
 
-That is the one documented command: the SPA runs standalone on in-browser mock providers, including simulated real-time pipeline activity (watch the Notification Worker run advance stage-by-stage).
+Real-time pipeline activity comes from the server-side simulator over SSE (watch the Notification Worker run advance stage-by-stage).
 
-Optional API scaffold (same mock dataset over HTTP + SSE — Python/FastAPI, managed with [uv](https://docs.astral.sh/uv/)):
-
-```bash
-uv sync           # one-time: creates .venv from uv.lock
-pnpm dev:api      # → http://localhost:4000/health
-```
+To run the SPA standalone without the API, set `VITE_DATA_SOURCE=memory` in `apps/web/.env` — in-browser mock providers with a client-side simulator; only `pnpm dev` needed (see [docs/local-development.md](docs/local-development.md#data-modes)).
 
 ## Screenshots
 
@@ -35,13 +32,14 @@ pnpm dev:api      # → http://localhost:4000/health
 | Command | What it does |
 |---|---|
 | `pnpm dev` | Run the web app (Vite, port 5173) |
-| `pnpm dev:api` | Run the FastAPI scaffold via uv (port 4000) |
+| `pnpm dev:api` | Run the FastAPI backend via uv (port 4000) |
 | `pnpm test:api` | Pytest suite for the API |
 | `pnpm build` | Production build of all workspaces |
 | `pnpm lint` | ESLint across workspaces |
 | `pnpm typecheck` | Strict TypeScript across workspaces |
 | `pnpm test` | Vitest unit/component tests |
-| `pnpm e2e` | Playwright end-to-end journeys (first run: `npx playwright install chromium`) |
+| `pnpm e2e` | Playwright end-to-end journeys, memory mode (first run: `npx playwright install chromium`) |
+| `pnpm e2e:http` | Playwright smoke tests against the live FastAPI backend |
 
 ## What's inside
 
@@ -67,7 +65,7 @@ Details (including the mermaid source of this diagram) in [docs/architecture.md]
 ```
 apps/
   web/            React 18 + TS + Vite + Tailwind v4 + shadcn-style UI + React Flow + Recharts
-  api/            FastAPI scaffold (uv workspace member): Pydantic validation,
+  api/            FastAPI backend (uv workspace member): Pydantic validation,
                   security headers, SSE stream, pytest suite, JSON fixtures
 packages/
   types/          Shared domain model, enums, zod schemas, provider interfaces
@@ -102,9 +100,9 @@ terraform apply tfplan  # only after review/approval
 
 ## Known limitations & next integrations
 
-- Providers are mock; the natural next step is wiring `PipelineProvider` → GitHub Actions API and `DeploymentProvider` → Argo CD API (see [docs/integrations.md](docs/integrations.md)).
-- API is stateless mock serving exported JSON fixtures; add PostgreSQL + SQLAlchemy, Redis, and Entra ID JWT validation at the marked extension points.
-- Real-time is a timer-driven simulator; swap for the SSE stream in `apps/api` once providers are live.
+- All integration data is simulated; the natural next step is wiring `PipelineProvider` → GitHub Actions API and `DeploymentProvider` → Argo CD API behind the existing HTTP endpoints (see [docs/integrations.md](docs/integrations.md)).
+- API state is in-memory, seeded from exported JSON fixtures; add PostgreSQL + SQLAlchemy, Redis, and Entra ID JWT validation at the marked extension points.
+- In HTTP mode the approvals panel and the AI service still read in-browser mock state (see [docs/local-development.md](docs/local-development.md#data-modes)); real HTTP providers for both are follow-up scope.
 - AI service is deterministic; connect an LLM endpoint behind `AIService` (responses already carry confidence/evidence/disclaimer contracts).
 
 ## Routes to review
