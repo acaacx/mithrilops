@@ -1,0 +1,19 @@
+{
+  "name": "secureflow-control-center",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AI-native DevSecOps pipeline governance and orchestration platform",
+  "scripts": {
+    "dev": "pnpm --filter @secureflow/web dev",
+    "dev:api": "pnpm --filter @secureflow/api dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "e2e": "pnpm --filter @secureflow/web e2e"
+  },
+  "packageManager": "pnpm@11.15.1",
+  "engines": {
+    "node": ">=20"
+  }
+}
