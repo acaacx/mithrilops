@@ -54,7 +54,7 @@ def stage_logs(run: PipelineRun, stage_definition_id: str) -> list[PipelineLogLi
                 level="error",
                 message=(
                     f"Exit code 1 — '{stage.name}' marked as {stage.status}. Evidence bundle "
-                    f"uploaded to secureflow-evidence/{run_id}/{stage_definition_id}.tar.gz"
+                    f"uploaded to secureflow-evidence/{run.id}/{stage_definition_id}.tar.gz"
                 ),
             ),
         ]

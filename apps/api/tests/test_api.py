@@ -70,6 +70,35 @@ def test_stage_logs_deterministic():
     assert client.get("/api/runs/none/stages/none/logs").status_code == 404
 
 
+def test_stage_logs_blocked_stage_no_namerefror():
+    """Regression: logs for blocked/failed stages must not NameError on run.id."""
+    runs = client.get("/api/runs").json()
+    # Find a run with a blocked or failed stage that has been started
+    blocked_run = None
+    blocked_stage = None
+    for run in runs:
+        for stage in run["stages"]:
+            if stage["status"] in ("blocked", "failed") and stage.get("startedAt"):
+                blocked_run = run
+                blocked_stage = stage
+                break
+        if blocked_stage:
+            break
+
+    if blocked_run and blocked_stage:
+        # Should not raise NameError; logs should include the error message with run.id
+        url = f"/api/runs/{blocked_run['id']}/stages/{blocked_stage['definitionId']}/logs"
+        logs = client.get(url).json()
+        assert len(logs) > 0
+        # Find the error message that includes the evidence bundle reference
+        evidence_msgs = [
+            m for m in logs
+            if "Evidence bundle" in m.get("message", "")
+            and blocked_run["id"] in m.get("message", "")
+        ]
+        assert len(evidence_msgs) > 0, "Should have evidence bundle message with run.id"
+
+
 def test_collection_endpoints_nonempty():
     for path in ("/api/findings", "/api/deployments", "/api/plans", "/api/frameworks", "/api/audit"):
         res = client.get(path)
