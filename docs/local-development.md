@@ -25,9 +25,29 @@ pnpm typecheck        # strict tsc across workspaces
 pnpm test             # vitest (28 unit/component tests)
 pnpm test:api         # pytest (9 API tests, via uv)
 pnpm --filter @secureflow/web test:watch
-pnpm e2e              # playwright; first time: npx playwright install chromium
+pnpm e2e              # playwright, memory mode; first time: npx playwright install chromium
+pnpm e2e:http         # playwright, http mode: boots uv API + vite dev server
 pnpm build            # production build
 ```
+
+## Data modes
+
+The SPA reads `VITE_DATA_SOURCE` at build/dev time:
+
+- **`http` (default):** providers call the FastAPI backend at `/api/*` (the
+  Vite dev server proxies to `http://127.0.0.1:4000`). Realtime comes from
+  the server's SSE stream (`/api/events`) — start both processes:
+
+      pnpm dev:api   # FastAPI on :4000 (server-side simulator on)
+      pnpm dev       # Vite on :5173
+
+- **`memory`:** providers run fully in-browser against the mock dataset;
+  the client-side simulator drives realtime. No API process needed:
+
+      VITE_DATA_SOURCE=memory pnpm dev
+
+vitest and the default Playwright suite pin `memory`; `pnpm e2e:http` boots
+both servers and smoke-tests the HTTP path.
 
 ## Demo tips
 

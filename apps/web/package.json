@@ -11,7 +11,8 @@
     "typecheck": "tsc -b --force",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "e2e:http": "playwright test -c playwright.http.config.ts"
   },
   "dependencies": {
     "@fontsource-variable/ibm-plex-sans": "^5.1.0",

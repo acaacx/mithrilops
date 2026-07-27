@@ -48,6 +48,29 @@ jobs:
       - name: Dependency scan (npm audit, high+)
         run: pnpm audit --audit-level high
 
+  e2e-http:
+    name: HTTP-mode smoke (Playwright)
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: API dependencies (uv, locked)
+        run: uv sync --locked --all-packages
+      - name: Install Playwright browsers
+        run: pnpm --filter @secureflow/web exec playwright install --with-deps chromium
+      - name: HTTP-mode smoke suite
+        run: pnpm e2e:http
+
   build:
     name: Build, scan, sign artifacts
     needs: quality
