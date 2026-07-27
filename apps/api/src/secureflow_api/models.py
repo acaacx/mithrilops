@@ -375,3 +375,32 @@ class ArchitectureDiagram(ApiModel):
     application_id: str
     nodes: list[ArchitectureNodeData]
     edges: list[ArchitectureEdge]
+
+
+class ApprovalBody(ApiModel):
+    decision: Literal["approved", "rejected", "changes-requested"]
+    comment: str
+    environment: EnvironmentName
+
+
+class FindingStatusBody(ApiModel):
+    status: FindingStatus
+    reason: str | None = None
+
+
+class PromoteBody(ApiModel):
+    to_environment: EnvironmentName
+
+
+class RollbackBody(ApiModel):
+    revision: str
+
+
+class AuditRecordBody(ApiModel):
+    actor: str
+    actor_role: Role
+    action: str
+    target: str
+    target_type: str
+    outcome: Literal["success", "denied", "failure"]
+    detail: str
