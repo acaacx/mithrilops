@@ -6,6 +6,7 @@ the memory-mode equivalent; keep the two tick implementations in sync.
 """
 
 import asyncio
+import logging
 import os
 from datetime import datetime
 
@@ -146,4 +147,7 @@ async def run_simulator() -> None:
     tick_seconds = float(os.environ.get("SIM_TICK_SECONDS", "7"))
     while True:
         await asyncio.sleep(tick_seconds)
-        tick(get_state())
+        try:
+            tick(get_state())
+        except Exception:
+            logging.getLogger(__name__).exception("simulator tick failed")
