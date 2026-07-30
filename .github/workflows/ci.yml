@@ -21,11 +21,11 @@ jobs:
     name: Lint, typecheck, test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # full history for gitleaks
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -34,7 +34,9 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        # setup-uv stopped publishing floating major/minor tags at v8 (supply
+        # chain hardening), so this is pinned exactly on purpose.
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: true
       - name: API dependencies (uv, locked)
@@ -42,7 +44,7 @@ jobs:
       - name: API tests (pytest)
         run: uv run --package secureflow-api pytest apps/api/tests
       - name: Secret scanning (Gitleaks)
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Dependency scan (npm audit, high+)
@@ -53,15 +55,15 @@ jobs:
     needs: quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: true
       - name: API dependencies (uv, locked)
@@ -83,9 +85,9 @@ jobs:
       packages: read
       actions: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -114,12 +116,12 @@ jobs:
         # not enabled here, so the API 403s. Keep the step so results start
         # flowing the moment GHAS is enabled, without failing the build today.
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
       - name: Upload scan results (artifact)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trivy-results-sarif
           path: trivy-results.sarif
@@ -135,7 +137,7 @@ jobs:
       # run, so the security gates are never conditional on cloud access.
       - name: Azure login (OIDC)
         if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
@@ -147,7 +149,8 @@ jobs:
           docker push $REGISTRY/$IMAGE_NAME:${{ github.sha }}
       - name: Sign image (Cosign, keyless OIDC)
         if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
-        uses: sigstore/cosign-installer@v3
+        # No floating v4 tag is published for cosign-installer; pin exactly.
+        uses: sigstore/cosign-installer@v4.1.2
       - if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
         run: cosign sign --yes $REGISTRY/$IMAGE_NAME:${{ github.sha }}
       - name: Attach SBOM attestation
@@ -162,8 +165,8 @@ jobs:
       run:
         working-directory: infrastructure/environments/dev
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: 1.9.8
       - name: Terraform format validation
@@ -186,7 +189,7 @@ jobs:
       # skips when AZURE_CLIENT_ID is unset.
       - name: Azure login (OIDC)
         if: github.event_name == 'push' && vars.AZURE_CLIENT_ID != ''
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
@@ -199,7 +202,7 @@ jobs:
         run: terraform plan -input=false -out=tfplan
       - name: Upload plan artifact
         if: github.event_name == 'push' && vars.AZURE_CLIENT_ID != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tfplan-dev
           path: infrastructure/environments/dev/tfplan
@@ -213,8 +216,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: development
     steps:
-      - uses: actions/checkout@v4
-      - uses: azure/login@v2
+      - uses: actions/checkout@v7
+      - uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
@@ -243,14 +246,14 @@ jobs:
     # this is the human approval gate; no AI or automation can bypass it.
     environment: production
     steps:
-      - uses: actions/checkout@v4
-      - uses: azure/login@v2
+      - uses: actions/checkout@v7
+      - uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_PROD_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_PROD_SUBSCRIPTION_ID }}
       - name: Verify image signature before rollout
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@v4.1.2
       - run: |
           cosign verify \
             --certificate-identity-regexp "https://github.com/${{ github.repository }}" \
