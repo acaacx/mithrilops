@@ -24,6 +24,22 @@ terraform apply tfplan
 
 Then push to `main`: CI builds, scans, signs, publishes, deploys to development, and waits for reviewers before production canary + post-deployment verification (auto-rollback on failed health check).
 
+### Before the Azure variables are set
+
+CI is designed to be green without a cloud account. Every step that needs Azure
+OIDC is guarded by `vars.AZURE_CLIENT_ID != ''`, so until you complete the
+bootstrap above these **skip** rather than fail:
+
+- `build`: ACR push, Cosign signing, SBOM attestation
+- `infrastructure`: remote-backend init, `terraform plan`, plan artifact
+- `deploy-dev` and `deploy-production` (the latter also needs `AZURE_PROD_CLIENT_ID`)
+
+What still runs on every push, with no credentials: lint, typecheck, vitest,
+pytest, gitleaks, `pnpm audit`, the Playwright HTTP smoke suite, frontend and
+container builds, the Trivy image scan, SBOM generation, `terraform fmt`,
+`terraform validate`, and Checkov. Setting the variables activates the skipped
+steps with no workflow edit.
+
 ## Environment separation
 
 - Separate tfvars + state keys per environment; production ideally a separate subscription with its own OIDC identity (`AZURE_PROD_*` variables).

@@ -129,25 +129,29 @@ jobs:
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           format: spdx-json
           output-file: sbom.spdx.json
+      # Registry publication requires Azure OIDC. When AZURE_CLIENT_ID is unset
+      # these steps skip instead of failing, and activate the moment the
+      # repository variables are configured. Build, scan, and SBOM above always
+      # run, so the security gates are never conditional on cloud access.
       - name: Azure login (OIDC)
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
         uses: azure/login@v2
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       - name: Push image to ACR
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
         run: |
           az acr login --name ${REGISTRY%%.*}
           docker push $REGISTRY/$IMAGE_NAME:${{ github.sha }}
       - name: Sign image (Cosign, keyless OIDC)
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
         uses: sigstore/cosign-installer@v3
-      - if: github.ref == 'refs/heads/main'
+      - if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
         run: cosign sign --yes $REGISTRY/$IMAGE_NAME:${{ github.sha }}
       - name: Attach SBOM attestation
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
         run: cosign attest --yes --predicate sbom.spdx.json --type spdxjson $REGISTRY/$IMAGE_NAME:${{ github.sha }}
 
   infrastructure:
@@ -165,19 +169,11 @@ jobs:
       - name: Terraform format validation
         run: terraform fmt -recursive -check
         working-directory: infrastructure
-      - name: Azure login (OIDC)
-        if: github.event_name == 'push'
-        uses: azure/login@v2
-        with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      - name: Terraform init (no backend on PRs)
+      # Offline validation first: fmt, validate, and Checkov need no cloud
+      # credentials, so they run on every event and are never skipped because
+      # Azure is unreachable.
+      - name: Terraform init (no backend)
         run: terraform init -backend=false -input=false
-        if: github.event_name == 'pull_request'
-      - name: Terraform init
-        run: terraform init -input=false
-        if: github.event_name == 'push'
       - name: Terraform validate
         run: terraform validate
       - name: IaC policy scan (Checkov)
@@ -186,11 +182,23 @@ jobs:
           directory: infrastructure
           framework: terraform
           hard_fail_on: HIGH
+      # Planning needs the real remote state, so it depends on Azure OIDC and
+      # skips when AZURE_CLIENT_ID is unset.
+      - name: Azure login (OIDC)
+        if: github.event_name == 'push' && vars.AZURE_CLIENT_ID != ''
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Terraform init (remote backend)
+        if: github.event_name == 'push' && vars.AZURE_CLIENT_ID != ''
+        run: terraform init -reconfigure -input=false
       - name: Terraform plan
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && vars.AZURE_CLIENT_ID != ''
         run: terraform plan -input=false -out=tfplan
       - name: Upload plan artifact
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && vars.AZURE_CLIENT_ID != ''
         uses: actions/upload-artifact@v4
         with:
           name: tfplan-dev
@@ -198,7 +206,9 @@ jobs:
 
   deploy-dev:
     name: Deploy to development
-    if: github.ref == 'refs/heads/main'
+    # Skips entirely until Azure OIDC variables are configured; deploy-production
+    # depends on this job, so it skips with it.
+    if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
     needs: [build, infrastructure]
     runs-on: ubuntu-latest
     environment: development
@@ -226,6 +236,7 @@ jobs:
 
   deploy-production:
     name: Production deployment (manual approval)
+    if: vars.AZURE_PROD_CLIENT_ID != ''
     needs: deploy-dev
     runs-on: ubuntu-latest
     # The 'production' GitHub environment enforces required reviewers —
