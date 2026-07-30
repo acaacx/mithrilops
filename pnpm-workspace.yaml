@@ -3,3 +3,12 @@ packages:
   - packages/*
 allowBuilds:
   esbuild: true
+
+auditConfig:
+  # GHSA-mh99-v99m-4gvg (brace-expansion DoS). The advisory range `<=5.0.7`
+  # semver-matches the 1.x line, so pnpm flags brace-expansion@1.1.16 even
+  # though 1.x was fixed in 1.1.12. Only reachable via
+  # eslint > minimatch@3 > brace-expansion, a devDependency that never ships.
+  # Revisit when eslint's minimatch chain moves off brace-expansion 1.x.
+  ignoreGhsas:
+    - GHSA-mh99-v99m-4gvg

@@ -19,6 +19,22 @@
 | Terraform: private endpoints, deny-by-default ACLs, RBAC Key Vault, TLS-only Redis/Postgres/Storage, WORM evidence storage, least-privilege role assignments, mandatory tags | `infrastructure/modules/*` |
 | Branch-protection & PR-approval requirements | documented + enforced through the `production` GitHub environment reviewers |
 
+## Accepted advisory exceptions
+
+`pnpm audit --audit-level high` gates CI. Exceptions live in
+`pnpm-workspace.yaml` under `auditConfig.ignoreGhsas`, each with a rationale
+comment. Current list:
+
+| Advisory | Package | Why accepted |
+|---|---|---|
+| GHSA-mh99-v99m-4gvg | brace-expansion | Advisory range `<=5.0.7` semver-matches the 1.x line, so the installed `1.1.16` is flagged despite 1.x being fixed in `1.1.12`. Reachable only via `eslint > minimatch@3 > brace-expansion` — a devDependency that never ships in a container. |
+
+Known **moderate** advisories, below the gate and not ignored: react-router
+(GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg) and react-router-dom
+(GHSA-jjmj-jmhj-qwj2). All three are only fixed in react-router 7.18+; no
+patched 6.x release exists (latest v6 is 6.30.4). Remediation is the v7
+migration, tracked as follow-up scope.
+
 ## Simulated (labeled in the UI)
 
 - Scanner findings, Argo CD state, GitHub PR actions, Terraform runs — mock providers.
