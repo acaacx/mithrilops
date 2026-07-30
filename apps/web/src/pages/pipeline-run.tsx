@@ -19,8 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { EmptyState, Skeleton, Tooltip } from "@/components/ui/misc";
-import { mockState } from "@/lib/providers";
 import {
+  useApprovals,
   useDeploymentRisk,
   usePlans,
   useRetryStage,
@@ -39,6 +39,7 @@ export default function PipelineRunPage() {
   const { data: summary, isLoading: aiLoading } = useRunSummary(runId);
   const { data: risk } = useDeploymentRisk(runId);
   const { data: plans } = usePlans(run?.applicationId);
+  const { data: approvalData } = useApprovals(runId);
   const retry = useRetryStage(runId);
   const canRetry = useCan("pipeline.retry-stage");
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
@@ -53,7 +54,7 @@ export default function PipelineRunPage() {
     selectedStage?.status === "running",
   );
 
-  const approvals = mockState.approvals.filter((a) => a.runId === runId);
+  const approvals = approvalData ?? [];
   const relatedPlan = plans?.find((p) => p.pipelineRunId === runId);
   const app = applications.find((a) => a.id === run?.applicationId);
 

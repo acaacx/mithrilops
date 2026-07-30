@@ -15,6 +15,7 @@ process.env.MOCK_NOW = String(Date.parse("2026-07-27T00:00:00.000Z"));
 
 const {
   applications,
+  approvals,
   architectureDiagrams,
   auditEvents,
   complianceFrameworks,
@@ -32,6 +33,7 @@ const write = (name: string, data: unknown) =>
 
 write("applications", applications);
 write("runs", pipelineRuns);
+write("approvals", approvals);
 write("findings", securityFindings);
 write("deployments", deployments);
 write("plans", infrastructurePlans);

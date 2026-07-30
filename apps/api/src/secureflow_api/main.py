@@ -26,6 +26,7 @@ from .logs import stage_logs
 from .simulator import run_simulator
 from .models import (
     Application,
+    Approval,
     ApprovalBody,
     ArchitectureDiagram,
     AuditEvent,
@@ -257,6 +258,14 @@ async def retry_stage(run_id: str, stage_id: str) -> None:
     )
 
 
+@app.get("/api/runs/{run_id}/approvals")
+async def list_approvals(run_id: str) -> list[Approval]:
+    st = state.get_state()
+    if not any(r.id == run_id for r in st.runs):
+        raise HTTPException(status_code=404, detail="run_not_found")
+    return [a for a in st.approvals if a.run_id == run_id]
+
+
 @app.post("/api/runs/{run_id}/approval", status_code=204)
 async def approve_deployment(run_id: str, body: ApprovalBody) -> None:
     st = state.get_state()
@@ -264,6 +273,16 @@ async def approve_deployment(run_id: str, body: ApprovalBody) -> None:
     if not run:
         raise HTTPException(status_code=404, detail="run_not_found")
     run.approval_status = body.decision
+    # Record the human decision on the pending approval too, so the approvals
+    # panel reflects it. Mirrors the mock provider.
+    pending = next(
+        (a for a in st.approvals if a.run_id == run_id and a.decision == "pending"), None
+    )
+    if pending:
+        pending.decision = body.decision
+        pending.decided_by = "You"
+        pending.decided_at = state.now_iso()
+        pending.comment = body.comment
     if body.decision == "approved":
         run.status = "running"
         stage = next((s for s in run.stages if s.status == "waiting-approval"), None)

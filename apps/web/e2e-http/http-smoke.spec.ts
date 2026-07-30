@@ -40,3 +40,16 @@ test("finding status mutation round-trips through the API", async ({ request }) 
   };
   expect(after.status).toBe("in-remediation");
 });
+
+test("approvals panel is served by the API in http mode", async ({ page }) => {
+  const approvalsResponse = page.waitForResponse(
+    (r) => r.url().includes("/api/runs/run-1482/approvals") && r.status() === 200,
+  );
+  await page.goto("/pipelines/run-1482");
+  const approvals = (await (await approvalsResponse).json()) as { requiredRole: string }[];
+  expect(approvals.length).toBeGreaterThan(0);
+  // Previously this panel read the in-memory mock state even in http mode, so
+  // it rendered regardless of what the API returned.
+  await expect(page.getByRole("heading", { name: "Approvals" })).toBeVisible();
+  await expect(page.getByText("Security Engineer — Approved")).toBeVisible();
+});

@@ -1,4 +1,5 @@
 import type {
+  Approval,
   ApprovalRequest,
   ArchitectureDiagram,
   ArchitectureProvider,
@@ -65,6 +66,7 @@ export const pipelineProvider: PipelineProvider = {
   getStageLogs: (runId, stageId) =>
     api<PipelineLogLine[]>(`/api/runs/${runId}/stages/${stageId}/logs`),
   retryStage: (runId, stageId) => post(`/api/runs/${runId}/stages/${stageId}/retry`),
+  listApprovals: (runId) => api<Approval[]>(`/api/runs/${runId}/approvals`),
   approveDeployment: (runId, approval: ApprovalRequest) =>
     post(`/api/runs/${runId}/approval`, approval),
 };

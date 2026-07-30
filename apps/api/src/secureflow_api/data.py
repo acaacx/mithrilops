@@ -13,6 +13,7 @@ from pydantic import TypeAdapter
 
 from .models import (
     Application,
+    Approval,
     ArchitectureDiagram,
     AuditEvent,
     ComplianceFramework,
@@ -34,6 +35,11 @@ def _load[T](name: str, adapter: TypeAdapter[list[T]]) -> list[T]:
 @cache
 def applications() -> list[Application]:
     return _load("applications", TypeAdapter(list[Application]))
+
+
+@cache
+def approvals() -> list[Approval]:
+    return _load("approvals", TypeAdapter(list[Approval]))
 
 
 @cache

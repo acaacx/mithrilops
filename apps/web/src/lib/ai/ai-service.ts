@@ -6,7 +6,8 @@ import type {
   PipelineStageDefinition,
 } from "@secureflow/types";
 import { STAGE_DEFINITIONS } from "@secureflow/mock-data";
-import { mockState, delay } from "@/lib/providers/mock-state";
+import { infrastructureProvider, pipelineProvider, securityProvider } from "@/lib/providers";
+import { delay } from "@/lib/providers/mock-state";
 
 const DISCLAIMER =
   "AI-generated analysis. A human reviewer must validate before acting; AI output never bypasses security or production approval gates.";
@@ -28,8 +29,7 @@ function rec(partial: Omit<AIRecommendation, "id" | "generatedAt" | "disclaimer"
  */
 export const aiService: AIService = {
   async summarizeRun(runId: string) {
-    const run = mockState.runs.find((r) => r.id === runId);
-    if (!run) throw new Error("Run not found");
+    const run = await pipelineProvider.getRun(runId);
     const failed = run.stages.find((s) => s.status === "failed" || s.status === "blocked");
     const previous = run.previousRunId;
 
@@ -116,8 +116,7 @@ export const aiService: AIService = {
   },
 
   async explainFinding(findingId: string) {
-    const finding = mockState.findings.find((f) => f.id === findingId);
-    if (!finding) throw new Error("Finding not found");
+    const finding = await securityProvider.getFinding(findingId);
     return delay(
       rec({
         capability: "finding-explanation",
@@ -140,8 +139,7 @@ export const aiService: AIService = {
   },
 
   async summarizeTerraformPlan(planId: string) {
-    const plan = mockState.plans.find((p) => p.id === planId);
-    if (!plan) throw new Error("Plan not found");
+    const plan = await infrastructureProvider.getPlan(planId);
     const risky = plan.policyViolations.length > 0 || plan.driftStatus === "drift-detected";
     return delay(
       rec({
@@ -168,8 +166,7 @@ export const aiService: AIService = {
   },
 
   async scoreDeploymentRisk(runId: string) {
-    const run = mockState.runs.find((r) => r.id === runId);
-    if (!run) throw new Error("Run not found");
+    const run = await pipelineProvider.getRun(runId);
     const critical = run.stages.flatMap((s) => s.findings).filter((f) => f.severity === "critical").length;
     const score = Math.min(95, 12 + critical * 45 + (run.securityGate === "failed" ? 30 : 0));
     return delay(

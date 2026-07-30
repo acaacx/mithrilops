@@ -48,6 +48,13 @@ export function useRun(runId: string) {
   });
 }
 
+export function useApprovals(runId: string) {
+  return useQuery({
+    queryKey: ["approvals", runId],
+    queryFn: () => pipelineProvider.listApprovals(runId),
+  });
+}
+
 export function useStageLogs(runId: string, stageId: string | null, live: boolean) {
   return useQuery({
     queryKey: ["logs", runId, stageId],
@@ -150,6 +157,7 @@ export function usePlanSummary(planId: string | null) {
 function invalidateRunData(qc: ReturnType<typeof useQueryClient>) {
   void qc.invalidateQueries({ queryKey: ["runs"] });
   void qc.invalidateQueries({ queryKey: ["run"] });
+  void qc.invalidateQueries({ queryKey: ["approvals"] });
   void qc.invalidateQueries({ queryKey: ["audit"] });
 }
 

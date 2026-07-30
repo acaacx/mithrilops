@@ -114,3 +114,29 @@ def test_post_audit_creates_event():
     assert res.status_code == 201
     assert res.json()["id"].startswith("aud-")
     assert client.get("/api/audit").json()[0]["action"] == "test.recorded"
+
+
+def test_list_approvals_returns_only_that_runs_approvals():
+    res = client.get("/api/runs/run-1482/approvals")
+    assert res.status_code == 200
+    approvals = res.json()
+    assert approvals, "run-1482 is seeded with approvals"
+    assert {a["runId"] for a in approvals} == {"run-1482"}
+    assert {"id", "environment", "requiredRole", "decision"} <= approvals[0].keys()
+    assert client.get("/api/runs/run-none/approvals").status_code == 404
+
+
+def test_approval_decision_is_recorded_on_the_pending_approval():
+    before = client.get("/api/runs/run-1482/approvals").json()
+    assert any(a["decision"] == "pending" for a in before)
+    res = client.post(
+        "/api/runs/run-1482/approval",
+        json={"decision": "approved", "comment": "recorded on the approval", "environment": "production"},
+    )
+    assert res.status_code == 204
+    after = client.get("/api/runs/run-1482/approvals").json()
+    assert not any(a["decision"] == "pending" for a in after)
+    decided = next(a for a in after if a["comment"] == "recorded on the approval")
+    assert decided["decision"] == "approved"
+    assert decided["decidedBy"] == "You"
+    assert decided["decidedAt"]

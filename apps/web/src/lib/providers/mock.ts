@@ -61,6 +61,10 @@ export const pipelineProvider: PipelineProvider = {
     return delay(undefined, 120);
   },
 
+  async listApprovals(runId: string) {
+    return delay(mockState.approvals.filter((a) => a.runId === runId));
+  },
+
   async approveDeployment(runId: string, approval: ApprovalRequest) {
     const run = mockState.runs.find((r) => r.id === runId);
     if (!run) throw new Error("Run not found");

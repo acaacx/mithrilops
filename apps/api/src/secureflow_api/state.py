@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from . import data
 from .models import (
     Application,
+    Approval,
     ArchitectureDiagram,
     AuditEvent,
     ComplianceFramework,
@@ -30,6 +31,7 @@ from .models import (
 class AppState:
     applications: list[Application]
     runs: list[PipelineRun]
+    approvals: list[Approval]
     findings: list[SecurityFinding]
     deployments: list[Deployment]
     plans: list[InfrastructurePlan]
@@ -46,6 +48,7 @@ def _seed() -> AppState:
     return AppState(
         applications=[a.model_copy(deep=True) for a in data.applications()],
         runs=[r.model_copy(deep=True) for r in data.pipeline_runs()],
+        approvals=[a.model_copy(deep=True) for a in data.approvals()],
         findings=[f.model_copy(deep=True) for f in data.security_findings()],
         deployments=[d.model_copy(deep=True) for d in data.deployments()],
         plans=[p.model_copy(deep=True) for p in data.infrastructure_plans()],

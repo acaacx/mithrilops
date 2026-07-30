@@ -1,0 +1,49 @@
+[
+  {
+    "id": "appr-1",
+    "runId": "run-1482",
+    "environment": "production",
+    "requiredRole": "release-approver",
+    "decision": "pending"
+  },
+  {
+    "id": "appr-2",
+    "runId": "run-1482",
+    "environment": "production",
+    "requiredRole": "security-engineer",
+    "decision": "approved",
+    "decidedBy": "Priya Natarajan",
+    "decidedAt": "2026-07-26T22:00:00.000Z",
+    "comment": "Security gate green; medium SCA finding tracked as REM-3121 with SLA."
+  },
+  {
+    "id": "appr-3",
+    "runId": "run-1481",
+    "environment": "production",
+    "requiredRole": "release-approver",
+    "decision": "approved",
+    "decidedBy": "Elin Sørensen",
+    "decidedAt": "2026-07-25T19:00:00.000Z",
+    "comment": "DORA metrics nominal, canary clean."
+  },
+  {
+    "id": "appr-4",
+    "runId": "run-2210",
+    "environment": "staging",
+    "requiredRole": "security-engineer",
+    "decision": "rejected",
+    "decidedBy": "Priya Natarajan",
+    "decidedAt": "2026-07-26T18:00:00.000Z",
+    "comment": "Critical CVE with public exploit — rebuild base image, no waiver."
+  },
+  {
+    "id": "appr-5",
+    "runId": "run-0713",
+    "environment": "production",
+    "requiredRole": "release-approver",
+    "decision": "approved",
+    "decidedBy": "Elin Sørensen",
+    "decidedAt": "2026-07-26T13:00:00.000Z",
+    "comment": "Approved with canary strategy; rollback triggered automatically post-deploy."
+  }
+]
