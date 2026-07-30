@@ -1,6 +1,7 @@
 import type {
   AIRecommendation,
   Application,
+  Approval,
   ArchitectureDiagram,
   AuditEvent,
   ComplianceFramework,
@@ -50,6 +51,7 @@ export interface PipelineProvider {
   getRun(runId: string): Promise<PipelineRun>;
   getStageLogs(runId: string, stageId: string): Promise<PipelineLogLine[]>;
   retryStage(runId: string, stageId: string): Promise<void>;
+  listApprovals(runId: string): Promise<Approval[]>;
   approveDeployment(runId: string, approval: ApprovalRequest): Promise<void>;
 }
 

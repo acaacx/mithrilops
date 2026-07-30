@@ -180,6 +180,17 @@ class CommitInfo(ApiModel):
     pull_request: PullRequestRef | None = None
 
 
+class Approval(ApiModel):
+    id: str
+    run_id: str
+    environment: EnvironmentName
+    required_role: Role
+    decision: ApprovalDecision
+    decided_by: str | None = None
+    decided_at: str | None = None
+    comment: str | None = None
+
+
 class PipelineRun(ApiModel):
     id: str
     application_id: str
