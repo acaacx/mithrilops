@@ -29,6 +29,7 @@ comment. Current list:
 | Advisory | Package | Why accepted |
 |---|---|---|
 | GHSA-mh99-v99m-4gvg | brace-expansion | Advisory range `<=5.0.7` semver-matches the 1.x line, so the installed `1.1.16` is flagged despite 1.x being fixed in `1.1.12`. Reachable only via `eslint > minimatch@3 > brace-expansion` — a devDependency that never ships in a container. |
+| GHSA-qwww-vcr4-c8h2 | react-router | CSRF bypass in the **RSC mode** server action handler. This app is a declarative `BrowserRouter` SPA — no RSC, no server rendering, no router actions — so the vulnerable code path is not in the bundle. Range is `>=7.12.0 <8.3.0`; the fix, react-router 8, requires React 19.2.7+ and Vite 7+, which this app is not on. Revisit with the React 19 / Vite 7 upgrade. |
 
 Trivy image findings are **not** in GitHub code scanning: that API needs
 GitHub Advanced Security, which is not enabled on this private repo. The SARIF
@@ -36,11 +37,10 @@ is published as the `trivy-results-sarif` workflow artifact instead, and the
 code-scanning upload stays in the workflow as `continue-on-error` so it starts
 working the moment GHAS is enabled.
 
-Known **moderate** advisories, below the gate and not ignored: react-router
-(GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg) and react-router-dom
-(GHSA-jjmj-jmhj-qwj2). All three are only fixed in react-router 7.18+; no
-patched 6.x release exists (latest v6 is 6.30.4). Remediation is the v7
-migration, tracked as follow-up scope.
+Those three moderate advisories (GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg on
+react-router; GHSA-jjmj-jmhj-qwj2 on react-router-dom) are now **fixed** —
+the app moved to `react-router@7.18.2` and dropped `react-router-dom`. No
+moderate advisories remain.
 
 ## Simulated (labeled in the UI)
 

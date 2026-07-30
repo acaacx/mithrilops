@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ArrowUpRight, ExternalLink } from "lucide-react";
 import { incidents, repositories, teams, userById } from "@secureflow/mock-data";
 import { PageHeader } from "@/components/domain/page-header";

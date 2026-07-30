@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { GitCompareArrows, Lock, Unlock } from "lucide-react";
 import type { InfrastructureResourceChange } from "@secureflow/types";
 import { applications } from "@secureflow/mock-data";

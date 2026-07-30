@@ -10,5 +10,13 @@ auditConfig:
   # though 1.x was fixed in 1.1.12. Only reachable via
   # eslint > minimatch@3 > brace-expansion, a devDependency that never ships.
   # Revisit when eslint's minimatch chain moves off brace-expansion 1.x.
+  #
+  # GHSA-qwww-vcr4-c8h2 (React Router RSC mode CSRF bypass). The vulnerable
+  # code path is the RSC server action handler; this app is a declarative
+  # BrowserRouter SPA with no RSC, no server rendering, and no router actions,
+  # so the path does not exist in the bundle. The advisory range is
+  # `>=7.12.0 <8.3.0` and react-router 8 requires React 19.2.7+ and Vite 7+,
+  # which this app is not on. Revisit with the React 19 / Vite 7 upgrade.
   ignoreGhsas:
     - GHSA-mh99-v99m-4gvg
+    - GHSA-qwww-vcr4-c8h2
