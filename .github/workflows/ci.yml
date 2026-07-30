@@ -108,11 +108,21 @@ jobs:
           ignore-unfixed: true
           format: sarif
           output: trivy-results.sarif
-      - name: Upload scan results
+      - name: Upload scan results (code scanning)
         if: always()
+        # Code scanning needs GitHub Advanced Security on a private repo; it is
+        # not enabled here, so the API 403s. Keep the step so results start
+        # flowing the moment GHAS is enabled, without failing the build today.
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-results.sarif
+      - name: Upload scan results (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-results-sarif
+          path: trivy-results.sarif
       - name: SBOM generation (Syft)
         uses: anchore/sbom-action@v0
         with:
