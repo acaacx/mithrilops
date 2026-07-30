@@ -14,6 +14,7 @@
 | No secrets in source control | `.env.example` placeholders only; gitleaks in CI |
 | Non-root containers, healthchecks | `docker/Dockerfile.*` |
 | CI: secret scan, dependency audit, Trivy, SBOM, Cosign signing, Checkov | `.github/workflows/ci.yml` |
+| Trivy image scan gates the build on **fixable** CRITICAL/HIGH findings | `ignore-unfixed: true` in the build job — see Accepted advisory exceptions |
 | GitHub → Azure via OIDC federation (no client secrets) | workflow `permissions: id-token: write` + `azurerm use_oidc` |
 | Signature verification before production rollout | `cosign verify` step in the prod job |
 | Terraform: private endpoints, deny-by-default ACLs, RBAC Key Vault, TLS-only Redis/Postgres/Storage, WORM evidence storage, least-privilege role assignments, mandatory tags | `infrastructure/modules/*` |
@@ -28,6 +29,12 @@ comment. Current list:
 | Advisory | Package | Why accepted |
 |---|---|---|
 | GHSA-mh99-v99m-4gvg | brace-expansion | Advisory range `<=5.0.7` semver-matches the 1.x line, so the installed `1.1.16` is flagged despite 1.x being fixed in `1.1.12`. Reachable only via `eslint > minimatch@3 > brace-expansion` — a devDependency that never ships in a container. |
+
+Trivy image findings are **not** in GitHub code scanning: that API needs
+GitHub Advanced Security, which is not enabled on this private repo. The SARIF
+is published as the `trivy-results-sarif` workflow artifact instead, and the
+code-scanning upload stays in the workflow as `continue-on-error` so it starts
+working the moment GHAS is enabled.
 
 Known **moderate** advisories, below the gate and not ignored: react-router
 (GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg) and react-router-dom
