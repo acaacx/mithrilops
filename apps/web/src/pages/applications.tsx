@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { ArrowUpRight, GitBranch, ShieldCheck } from "lucide-react";
 import { repositories, teams, userById } from "@secureflow/mock-data";
 import { PageHeader } from "@/components/domain/page-header";

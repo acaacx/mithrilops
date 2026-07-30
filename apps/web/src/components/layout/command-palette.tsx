@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Boxes, GitBranch, Search, ShieldHalf } from "lucide-react";
 import { applications, pipelineRuns, securityFindings } from "@secureflow/mock-data";
