@@ -42,8 +42,10 @@ steps with no workflow edit.
 
 ## Database
 
-`DATABASE_URL` flows Key Vault → Container App secret → env var, using
-password auth; a managed-identity/Entra token in place of the password is a
+`DATABASE_URL` will flow Key Vault → Container App secret → env var, using
+password auth (Terraform wiring not yet in place; the module generates the
+admin password but does not yet store it in Key Vault or inject it into the
+Container App); a managed-identity/Entra token in place of the password is a
 later change. Alembic migrations run at app startup (FastAPI lifespan,
 under an advisory lock), not as a separate deploy step — one code path
 covers local dev, CI, and the container.
