@@ -21,7 +21,14 @@ export default defineConfig({
       url: "http://127.0.0.1:4000/health",
       reuseExistingServer: true,
       timeout: 60_000,
-      env: { SIM_TICK_SECONDS: "2" },
+      env: {
+        SIM_TICK_SECONDS: "2",
+        // The API requires Postgres (docker compose up -d db locally; the
+        // e2e-http service container in CI). Same default as engine.py.
+        DATABASE_URL:
+          process.env.DATABASE_URL ??
+          "postgresql+asyncpg://postgres:postgres@localhost:5432/secureflow",
+      },
     },
     {
       command: "pnpm dev",

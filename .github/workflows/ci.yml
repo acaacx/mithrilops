@@ -20,6 +20,16 @@ jobs:
   quality:
     name: Lint, typecheck, test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: secureflow_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v7
         with:
@@ -43,6 +53,12 @@ jobs:
         run: uv sync --locked --all-packages
       - name: API tests (pytest)
         run: uv run --package secureflow-api pytest apps/api/tests
+        env:
+          TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/secureflow_test
+      - name: Migration drift check (alembic)
+        run: uv run --package secureflow-api alembic -c apps/api/alembic.ini check
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/secureflow_test
       - name: Secret scanning (Gitleaks)
         uses: gitleaks/gitleaks-action@v3
         env:
@@ -54,6 +70,16 @@ jobs:
     name: HTTP-mode smoke (Playwright)
     needs: quality
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: secureflow
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
