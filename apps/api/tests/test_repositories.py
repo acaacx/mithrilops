@@ -23,8 +23,6 @@ async def test_save_is_an_upsert(db_session):
 
 
 async def test_list_filters_on_typed_columns(db_session):
-    for run in data.pipeline_runs():
-        await repositories.runs.save(db_session, run)
     app_id = data.pipeline_runs()[0].application_id
     scoped = await repositories.runs.list(db_session, application_id=app_id)
     assert len(scoped) > 0
@@ -35,8 +33,6 @@ async def test_list_filters_on_typed_columns(db_session):
 
 async def test_list_preserves_insertion_order(db_session):
     fixture = data.pipeline_runs()
-    for run in fixture:
-        await repositories.runs.save(db_session, run)
     listed = await repositories.runs.list(db_session)
     assert [r.id for r in listed] == [r.id for r in fixture]
 
@@ -44,16 +40,7 @@ async def test_list_preserves_insertion_order(db_session):
 async def test_typed_columns_match_payload_for_every_repo(db_session):
     """The hybrid design's one real failure mode is payload/column drift.
     Table-driven: every typed column must equal its payload-derived value."""
-    loaders = {
-        "applications": data.applications, "runs": data.pipeline_runs,
-        "approvals": data.approvals, "findings": data.security_findings,
-        "deployments": data.deployments, "plans": data.infrastructure_plans,
-        "frameworks": data.compliance_frameworks, "audit": data.audit_events,
-        "integrations": data.integrations, "diagrams": data.architecture_diagrams,
-    }
     for name, repo in repositories.ALL.items():
-        for obj in loaders[name]():
-            await repo.save(db_session, obj)
         result = await db_session.execute(select(repo.table))
         for row in result.mappings():
             model = repo.model.model_validate(row["payload"])
