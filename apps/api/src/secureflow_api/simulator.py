@@ -168,6 +168,9 @@ async def run_simulator() -> None:
         if not got:
             logging.getLogger(__name__).info("another replica holds the ticker lock; idle")
             return
+        # Commit the advisory-lock transaction; the lock survives commit and we
+        # avoid holding the connection idle-in-transaction for the process lifetime.
+        await lock_conn.commit()
         while True:
             await asyncio.sleep(tick_seconds)
             try:
