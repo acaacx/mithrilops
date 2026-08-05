@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.pool import NullPool
 
 _engine: AsyncEngine | None = None
 _sessionmaker: async_sessionmaker[AsyncSession] | None = None
@@ -27,7 +28,14 @@ def database_url() -> str:
 def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
-        _engine = create_async_engine(database_url(), pool_pre_ping=True)
+        # NullPool: no idle connections are kept between checkouts. Required
+        # because the sync TestClient (test_mutations.py, pre-Task-6) opens a
+        # fresh event loop per request when not used as a context manager —
+        # a pooled asyncpg connection born on one (now-closed) loop cannot be
+        # reused from another, and blows up as "attached to a different loop".
+        # A pooled engine is safe once every caller shares one event loop
+        # (uvicorn in production, the async `client` fixture in tests).
+        _engine = create_async_engine(database_url(), poolclass=NullPool)
     return _engine
 
 
