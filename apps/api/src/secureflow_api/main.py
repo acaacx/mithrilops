@@ -16,11 +16,16 @@ import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from . import state
+from .clock import now_iso
+from .db import migrate, repositories, seed
+from .db.engine import dispose_engine, get_sessionmaker
+from .db.session import get_session
 from .events import broadcast
 from .logs import stage_logs
 from .simulator import run_simulator
@@ -51,12 +56,18 @@ logger = logging.getLogger("secureflow-api")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await asyncio.to_thread(migrate.upgrade_to_head)
+    async with get_sessionmaker()() as session:
+        if await seed.ensure_seeded(session):
+            logger.info("database seeded from fixtures")
+        await session.commit()
     task = None
     if os.environ.get("SIM_ENABLED", "1") != "0":
         task = asyncio.create_task(run_simulator())
     yield
     if task:
         task.cancel()
+    await dispose_engine()
 
 
 app = FastAPI(
@@ -90,13 +101,15 @@ async def health() -> dict[str, str]:
 
 
 @app.get("/api/applications")
-async def list_applications() -> list[Application]:
-    return state.get_state().applications
+async def list_applications(session: AsyncSession = Depends(get_session)) -> list[Application]:
+    return await repositories.applications.list(session)
 
 
 @app.get("/api/applications/{app_id}")
-async def get_application(app_id: str) -> Application:
-    found = next((a for a in state.get_state().applications if a.id == app_id), None)
+async def get_application(
+    app_id: str, session: AsyncSession = Depends(get_session)
+) -> Application:
+    found = await repositories.applications.get(session, app_id)
     if not found:
         raise HTTPException(status_code=404, detail="application_not_found")
     return found
@@ -107,29 +120,26 @@ async def list_runs(
     application_id: str | None = Query(default=None, alias="applicationId"),
     status: PipelineRunStatus | None = None,
     environment: EnvironmentName | None = None,
+    session: AsyncSession = Depends(get_session),
 ) -> list[PipelineRun]:
-    runs = state.get_state().runs
-    if application_id:
-        runs = [r for r in runs if r.application_id == application_id]
-    if status:
-        runs = [r for r in runs if r.status == status]
-    if environment:
-        runs = [r for r in runs if r.environment == environment]
-    return runs
+    return await repositories.runs.list(
+        session, application_id=application_id, status=status, environment=environment
+    )
 
 
 @app.get("/api/runs/{run_id}")
-async def get_run(run_id: str) -> PipelineRun:
-    run = next((r for r in state.get_state().runs if r.id == run_id), None)
+async def get_run(run_id: str, session: AsyncSession = Depends(get_session)) -> PipelineRun:
+    run = await repositories.runs.get(session, run_id)
     if not run:
         raise HTTPException(status_code=404, detail="run_not_found")
     return run
 
 
 @app.get("/api/runs/{run_id}/stages/{stage_id}/logs")
-async def get_stage_logs(run_id: str, stage_id: str) -> list[PipelineLogLine]:
-    st = state.get_state()
-    run = next((r for r in st.runs if r.id == run_id), None)
+async def get_stage_logs(
+    run_id: str, stage_id: str, session: AsyncSession = Depends(get_session)
+) -> list[PipelineLogLine]:
+    run = await repositories.runs.get(session, run_id)
     if not run:
         raise HTTPException(status_code=404, detail="run_not_found")
     stage = next(
@@ -141,65 +151,79 @@ async def get_stage_logs(run_id: str, stage_id: str) -> list[PipelineLogLine]:
 
 
 @app.get("/api/findings")
-async def list_findings() -> list[SecurityFinding]:
-    return state.get_state().findings
+async def list_findings(
+    session: AsyncSession = Depends(get_session),
+) -> list[SecurityFinding]:
+    return await repositories.findings.list(session)
 
 
 @app.get("/api/deployments")
-async def list_deployments() -> list[Deployment]:
-    return state.get_state().deployments
+async def list_deployments(session: AsyncSession = Depends(get_session)) -> list[Deployment]:
+    return await repositories.deployments.list(session)
 
 
 @app.get("/api/plans")
-async def list_plans() -> list[InfrastructurePlan]:
-    return state.get_state().plans
+async def list_plans(
+    session: AsyncSession = Depends(get_session),
+) -> list[InfrastructurePlan]:
+    return await repositories.plans.list(session)
 
 
 @app.get("/api/frameworks")
-async def list_frameworks() -> list[ComplianceFramework]:
-    return state.get_state().frameworks
+async def list_frameworks(
+    session: AsyncSession = Depends(get_session),
+) -> list[ComplianceFramework]:
+    return await repositories.frameworks.list(session)
 
 
 @app.get("/api/audit")
-async def list_audit() -> list[AuditEvent]:
-    return state.get_state().audit
+async def list_audit(session: AsyncSession = Depends(get_session)) -> list[AuditEvent]:
+    return await repositories.audit.list(session)
 
 
 @app.get("/api/findings/{finding_id}")
-async def get_finding(finding_id: str) -> SecurityFinding:
-    found = next((f for f in state.get_state().findings if f.id == finding_id), None)
+async def get_finding(
+    finding_id: str, session: AsyncSession = Depends(get_session)
+) -> SecurityFinding:
+    found = await repositories.findings.get(session, finding_id)
     if not found:
         raise HTTPException(status_code=404, detail="finding_not_found")
     return found
 
 
 @app.get("/api/plans/{plan_id}")
-async def get_plan(plan_id: str) -> InfrastructurePlan:
-    plan = next((p for p in state.get_state().plans if p.id == plan_id), None)
+async def get_plan(
+    plan_id: str, session: AsyncSession = Depends(get_session)
+) -> InfrastructurePlan:
+    plan = await repositories.plans.get(session, plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="plan_not_found")
     return plan
 
 
 @app.get("/api/frameworks/{framework_id}")
-async def get_framework(framework_id: str) -> ComplianceFramework:
-    fw = next((f for f in state.get_state().frameworks if f.id == framework_id), None)
+async def get_framework(
+    framework_id: str, session: AsyncSession = Depends(get_session)
+) -> ComplianceFramework:
+    fw = await repositories.frameworks.get(session, framework_id)
     if not fw:
         raise HTTPException(status_code=404, detail="framework_not_found")
     return fw
 
 
 @app.get("/api/integrations")
-async def list_integrations() -> list[Integration]:
-    return state.get_state().integrations
+async def list_integrations(session: AsyncSession = Depends(get_session)) -> list[Integration]:
+    return await repositories.integrations.list(session)
 
 
 @app.get("/api/architecture/{app_id}")
-async def get_architecture(app_id: str) -> ArchitectureDiagram:
-    diagram = next((d for d in state.get_state().diagrams if d.application_id == app_id), None)
-    if not diagram:
+async def get_architecture(
+    app_id: str, session: AsyncSession = Depends(get_session)
+) -> ArchitectureDiagram:
+    found = await repositories.diagrams.list(session, application_id=app_id)
+    if not found:
         raise HTTPException(status_code=404, detail="diagram_not_found")
-    return diagram
+    return found[0]
 
 
 @app.get("/api/events")
@@ -259,11 +283,12 @@ async def retry_stage(run_id: str, stage_id: str) -> None:
 
 
 @app.get("/api/runs/{run_id}/approvals")
-async def list_approvals(run_id: str) -> list[Approval]:
-    st = state.get_state()
-    if not any(r.id == run_id for r in st.runs):
+async def list_approvals(
+    run_id: str, session: AsyncSession = Depends(get_session)
+) -> list[Approval]:
+    if not await repositories.runs.get(session, run_id):
         raise HTTPException(status_code=404, detail="run_not_found")
-    return [a for a in st.approvals if a.run_id == run_id]
+    return await repositories.approvals.list(session, run_id=run_id)
 
 
 @app.post("/api/runs/{run_id}/approval", status_code=204)

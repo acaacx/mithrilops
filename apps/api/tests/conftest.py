@@ -74,6 +74,23 @@ def seeded_db(migrated_db):
 
 
 @pytest.fixture
+async def client(db_session):
+    from httpx import ASGITransport, AsyncClient
+
+    from secureflow_api.db.session import get_session
+    from secureflow_api.main import app
+
+    async def _override():
+        yield db_session
+
+    app.dependency_overrides[get_session] = _override
+    transport = ASGITransport(app=app)  # no lifespan: migrations/seed/simulator stay out of tests
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        yield c
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
 async def committed_session(seeded_db):
     """Real commit semantics, for tests exercising the seed guard and reset.
     Teardown restores the pristine seed so rollback-based tests stay valid."""
