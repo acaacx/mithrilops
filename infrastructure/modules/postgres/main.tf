@@ -33,7 +33,7 @@ resource "azurerm_postgresql_flexible_server" "this" {
   name                          = var.name
   resource_group_name           = var.resource_group_name
   location                      = var.location
-  version                       = "16"
+  version                       = "17"
   sku_name                      = var.sku_name
   storage_mb                    = 65536
   backup_retention_days         = 35

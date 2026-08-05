@@ -40,6 +40,19 @@ container builds, the Trivy image scan, SBOM generation, `terraform fmt`,
 `terraform validate`, and Checkov. Setting the variables activates the skipped
 steps with no workflow edit.
 
+## Database
+
+`DATABASE_URL` flows Key Vault → Container App secret → env var, using
+password auth; a managed-identity/Entra token in place of the password is a
+later change. Alembic migrations run at app startup (FastAPI lifespan,
+under an advisory lock), not as a separate deploy step — one code path
+covers local dev, CI, and the container.
+
+**Tracked follow-up, out of scope here:** `infrastructure/modules/postgres`
+is hard-wired to private networking (delegated subnet, private DNS, public
+access off) and does not yet honor the `enable_private_networking` gate
+used elsewhere in the Azure footprint.
+
 ## Environment separation
 
 - Separate tfvars + state keys per environment; production ideally a separate subscription with its own OIDC identity (`AZURE_PROD_*` variables).

@@ -5,6 +5,7 @@
 - Node.js ≥ 20 (tested on 25)
 - pnpm ≥ 9 (`corepack enable pnpm`)
 - [uv](https://docs.astral.sh/uv/) + Python ≥ 3.12 (only for the API scaffold; uv can install Python itself)
+- Docker (for local Postgres — the API has no in-memory fallback)
 - Terraform ≥ 1.9 (only for infrastructure work)
 
 ## Setup
@@ -22,6 +23,30 @@ pnpm dev              # web on http://localhost:5173
 
 Want to skip the API entirely? See [Data modes](#data-modes) below for the
 in-browser `memory` mode.
+
+## Database
+
+`docker compose up -d db` is the one required dependency — the API has no
+in-memory fallback, so both `pnpm dev:api` and `pytest` need it reachable.
+Data persists across restarts in a named volume; `docker compose down -v` if
+you need a clean slate (the init script that creates `secureflow_test` only
+runs on an empty volume).
+
+```bash
+docker compose up -d db
+```
+
+Defaults (matching `docker-compose.yml`, overridable via `.env`):
+
+- `DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/secureflow`
+- `TEST_DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/secureflow_test`
+
+Alembic migrations and fixture seeding run automatically at API startup — no
+manual migration step. `POST /api/demo/reset` restores the seeded demo state
+without restarting the process (gated by `DEMO_RESET_ENABLED`, on by
+default locally). Because state now lives in Postgres instead of an
+in-process dict, it survives API restarts; reset is how you get back to a
+known-good demo state without touching the database yourself.
 
 ## Everyday loops
 
