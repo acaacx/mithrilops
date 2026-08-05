@@ -8,23 +8,30 @@ the memory-mode equivalent; keep the two tick implementations in sync.
 import asyncio
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from .clock import now_iso
+from .db import repositories
+from .db.engine import get_engine, get_sessionmaker
 from .events import broadcast
 from .models import StageFindingRef
-from .state import AppState, get_state, now_iso
 
 SIMULATED_RUN_ID = "run-0512"
 RESET_INDEX = 11
-IDLE_TICKS = 5
 STOP_AFTER = "smoke-tests"
+TICKER_LOCK_KEY = 715003
 
-_idle_ticks = 0
+IDLE_SECONDS = float(os.environ.get("SIM_IDLE_SECONDS", "35"))
 
 
-def reset() -> None:
-    global _idle_ticks
-    _idle_ticks = 0
+def _idle_elapsed(finished_at: str | None) -> bool:
+    if not finished_at:
+        return True
+    t = datetime.fromisoformat(finished_at.replace("Z", "+00:00"))
+    return (datetime.now(timezone.utc) - t).total_seconds() > IDLE_SECONDS
 
 
 def _seconds_between(start: str | None, end: str) -> int:
@@ -43,17 +50,17 @@ def _run_updated(run_id: str) -> None:
     broadcast.publish("run-updated", {"runId": run_id})
 
 
-def tick(state: AppState) -> None:
-    global _idle_ticks
-    run = next((r for r in state.runs if r.id == SIMULATED_RUN_ID), None)
+async def tick(session: AsyncSession) -> None:
+    # FOR UPDATE: the simulated run is the one row both the simulator and the
+    # request handlers write; the lock serializes the only real race. All
+    # other writes in the app are last-write-wins by design.
+    run = await repositories.runs.get(session, SIMULATED_RUN_ID, for_update=True)
     if not run:
         return
 
     if run.status == "succeeded":
-        _idle_ticks += 1
-        if _idle_ticks < IDLE_TICKS:
+        if not _idle_elapsed(run.finished_at):
             return
-        _idle_ticks = 0
         run.status = "running"
         run.security_gate = "in-progress"
         run.finished_at = None
@@ -68,6 +75,7 @@ def tick(state: AppState) -> None:
         first = run.stages[RESET_INDEX]
         first.status = "running"
         first.started_at = now_iso()
+        await repositories.runs.save(session, run)
         _notify(
             "Pipeline started",
             f"notification-worker {run.artifact_version} — new execution began.",
@@ -105,11 +113,12 @@ def tick(state: AppState) -> None:
         )
 
     if current.definition_id == "argo-sync":
-        dep = next((d for d in state.deployments if d.id == "dep-not-dev"), None)
+        dep = await repositories.deployments.get(session, "dep-not-dev")
         if dep:
             dep.argo_sync_status = "synced"
             dep.status = "healthy"
             dep.version = run.artifact_version
+            await repositories.deployments.save(session, dep)
 
     if current.definition_id == STOP_AFTER:
         run.status = "succeeded"
@@ -119,6 +128,7 @@ def tick(state: AppState) -> None:
         for s in run.stages:
             if s.status == "pending":
                 s.status = "skipped"
+        await repositories.runs.save(session, run)
         _notify(
             "Pipeline succeeded",
             f"notification-worker {run.artifact_version} verified in development.",
@@ -140,14 +150,29 @@ def tick(state: AppState) -> None:
                 after.status = "running"
                 after.started_at = now_iso()
 
+    await repositories.runs.save(session, run)
     _run_updated(run.id)
 
 
 async def run_simulator() -> None:
     tick_seconds = float(os.environ.get("SIM_TICK_SECONDS", "7"))
-    while True:
-        await asyncio.sleep(tick_seconds)
-        try:
-            tick(get_state())
-        except Exception:
-            logging.getLogger(__name__).exception("simulator tick failed")
+    maker = get_sessionmaker()
+    # Session-level advisory lock on a dedicated connection, held for the
+    # process lifetime: exactly one replica drives the demo.
+    async with get_engine().connect() as lock_conn:
+        got = (
+            await lock_conn.execute(
+                text("SELECT pg_try_advisory_lock(:key)"), {"key": TICKER_LOCK_KEY}
+            )
+        ).scalar()
+        if not got:
+            logging.getLogger(__name__).info("another replica holds the ticker lock; idle")
+            return
+        while True:
+            await asyncio.sleep(tick_seconds)
+            try:
+                async with maker() as session:
+                    await tick(session)
+                    await session.commit()
+            except Exception:
+                logging.getLogger(__name__).exception("simulator tick failed")
