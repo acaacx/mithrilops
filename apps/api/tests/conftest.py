@@ -35,11 +35,11 @@ def migrated_db():
 
 
 @pytest.fixture
-async def db_session(migrated_db):
+async def db_session(seeded_db):
     """A session inside an outer transaction that is rolled back at teardown.
     Application commit() calls become savepoint releases — real commit
     semantics never touch the database."""
-    engine = create_async_engine(migrated_db)
+    engine = create_async_engine(seeded_db)
     async with engine.connect() as conn:
         outer = await conn.begin()
         maker = async_sessionmaker(
@@ -49,3 +49,43 @@ async def db_session(migrated_db):
             yield session
         await outer.rollback()
     await engine.dispose()
+
+
+@pytest.fixture(scope="session")
+def seeded_db(migrated_db):
+    """Pristine seeded test database, committed for real, once per session.
+    reset_demo (not ensure_seeded) so a dirty database from an aborted
+    earlier run cannot leak state into this one."""
+    import asyncio
+
+    from secureflow_api.db import seed
+
+    async def _reset() -> None:
+        engine = create_async_engine(migrated_db)
+        try:
+            async with async_sessionmaker(engine)() as session:
+                await seed.reset_demo(session)
+                await session.commit()
+        finally:
+            await engine.dispose()
+
+    asyncio.run(_reset())
+    return migrated_db
+
+
+@pytest.fixture
+async def committed_session(seeded_db):
+    """Real commit semantics, for tests exercising the seed guard and reset.
+    Teardown restores the pristine seed so rollback-based tests stay valid."""
+    from secureflow_api.db import seed
+
+    engine = create_async_engine(seeded_db)
+    try:
+        async with async_sessionmaker(engine, expire_on_commit=False)() as session:
+            yield session
+            await session.rollback()
+        async with async_sessionmaker(engine)() as session:
+            await seed.reset_demo(session)
+            await session.commit()
+    finally:
+        await engine.dispose()
