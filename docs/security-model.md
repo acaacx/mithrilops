@@ -11,6 +11,7 @@
 | Secure HTTP headers + CSP | `docker/nginx.conf` (SPA), security-headers middleware in `apps/api/src/secureflow_api/main.py` (API) |
 | Rate limiting | extension point — edge/API gateway in production |
 | CORS restricted to the SPA origin | `apps/api/src/secureflow_api/main.py` |
+| `POST /api/demo/reset` restores the demo seed; gated by `DEMO_RESET_ENABLED` and returns 404 when disabled, which is the production default — production does not advertise the endpoint | `apps/api/src/secureflow_api/main.py` |
 | No secrets in source control | `.env.example` placeholders only; gitleaks in CI |
 | Non-root containers, healthchecks | `docker/Dockerfile.*` |
 | CI: secret scan, dependency audit, Trivy, SBOM, Cosign signing, Checkov | `.github/workflows/ci.yml` |

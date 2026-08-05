@@ -1,18 +1,7 @@
-import pytest
-
-from secureflow_api import state
-
-
-@pytest.fixture(autouse=True)
-def fresh_state():
-    state.reset_state()
-    yield
-    state.reset_state()
-
-
 import asyncio
 import os
 
+import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 TEST_DATABASE_URL = os.environ.get(
