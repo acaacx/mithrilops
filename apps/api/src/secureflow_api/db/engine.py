@@ -35,6 +35,8 @@ def get_engine() -> AsyncEngine:
         # reused from another, and blows up as "attached to a different loop".
         # A pooled engine is safe once every caller shares one event loop
         # (uvicorn in production, the async `client` fixture in tests).
+        # TODO(task-6): revert to pooled engine (pool_pre_ping=True) once
+        # test_mutations.py uses the async client and no sync TestClient remains.
         _engine = create_async_engine(database_url(), poolclass=NullPool)
     return _engine
 

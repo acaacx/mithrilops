@@ -1,3 +1,9 @@
+"""Still uses the sync TestClient (pre-Task-6); runs against real Postgres via
+the un-overridden get_session. 8 of its tests fail by design until Task 6
+rewires mutation routes to read/write through the DB. Running this file alone
+uses the default DATABASE_URL, not the test DB — run the full suite instead.
+"""
+
 from fastapi.testclient import TestClient
 
 from secureflow_api.main import app
