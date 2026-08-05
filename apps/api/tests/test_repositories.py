@@ -13,7 +13,9 @@ async def test_save_roundtrips_payload_exactly(db_session):
 
 
 async def test_save_is_an_upsert(db_session):
-    run = data.pipeline_runs()[0]
+    # Deep copy: this test mutates `run`, and pipeline_runs() is @cache'd —
+    # mutating the shared object would poison it for every later test/seed.
+    run = data.pipeline_runs()[0].model_copy(deep=True)
     await repositories.runs.save(db_session, run)
     run.status = "cancelled"
     await repositories.runs.save(db_session, run)
