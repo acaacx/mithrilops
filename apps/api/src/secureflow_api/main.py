@@ -21,7 +21,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from . import state
 from .clock import now_iso
 from .db import migrate, repositories, seed
 from .db.engine import dispose_engine, get_sessionmaker
@@ -255,9 +254,10 @@ def _sse(event: str, payload: object) -> str:
 
 
 @app.post("/api/runs/{run_id}/stages/{stage_id}/retry", status_code=204)
-async def retry_stage(run_id: str, stage_id: str) -> None:
-    st = state.get_state()
-    run = next((r for r in st.runs if r.id == run_id), None)
+async def retry_stage(
+    run_id: str, stage_id: str, session: AsyncSession = Depends(get_session)
+) -> None:
+    run = await repositories.runs.get(session, run_id, for_update=True)
     stage = (
         next((s for s in run.stages if s.id == stage_id or s.definition_id == stage_id), None)
         if run
@@ -267,11 +267,12 @@ async def retry_stage(run_id: str, stage_id: str) -> None:
         raise HTTPException(status_code=404, detail="stage_not_found")
     stage.status = "running"
     stage.failure_reason = None
-    stage.started_at = state.now_iso()
+    stage.started_at = now_iso()
     stage.finished_at = None
     run.status = "running"
-    state.record_audit(
-        st,
+    await repositories.runs.save(session, run)
+    await repositories.audit.record(
+        session,
         actor="You",
         actor_role="devsecops-engineer",
         action="stage.retried",
@@ -292,45 +293,53 @@ async def list_approvals(
 
 
 @app.post("/api/runs/{run_id}/approval", status_code=204)
-async def approve_deployment(run_id: str, body: ApprovalBody) -> None:
-    st = state.get_state()
-    run = next((r for r in st.runs if r.id == run_id), None)
+async def approve_deployment(
+    run_id: str, body: ApprovalBody, session: AsyncSession = Depends(get_session)
+) -> None:
+    run = await repositories.runs.get(session, run_id, for_update=True)
     if not run:
         raise HTTPException(status_code=404, detail="run_not_found")
     run.approval_status = body.decision
-    # Record the human decision on the pending approval too, so the approvals
-    # panel reflects it. Mirrors the mock provider.
     pending = next(
-        (a for a in st.approvals if a.run_id == run_id and a.decision == "pending"), None
+        (
+            a
+            for a in await repositories.approvals.list(session, run_id=run_id)
+            if a.decision == "pending"
+        ),
+        None,
     )
     if pending:
         pending.decision = body.decision
         pending.decided_by = "You"
-        pending.decided_at = state.now_iso()
+        pending.decided_at = now_iso()
         pending.comment = body.comment
+        await repositories.approvals.save(session, pending)
     if body.decision == "approved":
         run.status = "running"
         stage = next((s for s in run.stages if s.status == "waiting-approval"), None)
         if stage:
             stage.status = "succeeded"
-            stage.finished_at = state.now_iso()
+            stage.finished_at = now_iso()
     else:
         run.status = "cancelled" if body.decision == "rejected" else "blocked"
+    await repositories.runs.save(session, run)
 
 
 @app.patch("/api/findings/{finding_id}/status", status_code=204)
-async def update_finding_status(finding_id: str, body: FindingStatusBody) -> None:
-    st = state.get_state()
-    finding = next((f for f in st.findings if f.id == finding_id), None)
+async def update_finding_status(
+    finding_id: str, body: FindingStatusBody, session: AsyncSession = Depends(get_session)
+) -> None:
+    finding = await repositories.findings.get(session, finding_id, for_update=True)
     if not finding:
         raise HTTPException(status_code=404, detail="finding_not_found")
     finding.status = body.status
     if body.reason:
         finding.suppression_history.append(
-            SuppressionEntry(date=state.now_iso(), by="You", reason=body.reason)
+            SuppressionEntry(date=now_iso(), by="You", reason=body.reason)
         )
-    state.record_audit(
-        st,
+    await repositories.findings.save(session, finding)
+    await repositories.audit.record(
+        session,
         actor="You",
         actor_role="security-engineer",
         action="finding.status-changed",
@@ -342,46 +351,38 @@ async def update_finding_status(finding_id: str, body: FindingStatusBody) -> Non
 
 
 @app.post("/api/applications/{app_id}/sync", status_code=204)
-async def sync_application(app_id: str) -> None:
-    st = state.get_state()
-    if not any(a.id == app_id for a in st.applications):
+async def sync_application(app_id: str, session: AsyncSession = Depends(get_session)) -> None:
+    if not await repositories.applications.get(session, app_id):
         raise HTTPException(status_code=404, detail="application_not_found")
-    for d in st.deployments:
-        if d.application_id == app_id:
-            d.argo_sync_status = "synced"
+    for d in await repositories.deployments.list(session, application_id=app_id):
+        d.argo_sync_status = "synced"
+        await repositories.deployments.save(session, d)
 
 
 ENV_ORDER: list[EnvironmentName] = ["development", "test", "staging", "production"]
 
 
 @app.post("/api/applications/{app_id}/promote", status_code=204)
-async def promote(app_id: str, body: PromoteBody) -> None:
-    st = state.get_state()
-    if not any(a.id == app_id for a in st.applications):
+async def promote(
+    app_id: str, body: PromoteBody, session: AsyncSession = Depends(get_session)
+) -> None:
+    if not await repositories.applications.get(session, app_id):
         raise HTTPException(status_code=404, detail="application_not_found")
     from_index = ENV_ORDER.index(body.to_environment) - 1
     from_env = ENV_ORDER[from_index] if from_index >= 0 else None
-    source = next(
-        (d for d in st.deployments if d.application_id == app_id and d.environment == from_env),
-        None,
-    )
-    target = next(
-        (
-            d
-            for d in st.deployments
-            if d.application_id == app_id and d.environment == body.to_environment
-        ),
-        None,
-    )
+    deployments = await repositories.deployments.list(session, application_id=app_id)
+    source = next((d for d in deployments if d.environment == from_env), None)
+    target = next((d for d in deployments if d.environment == body.to_environment), None)
     if source and target:
         target.previous_version = target.version
         target.version = source.version
         target.status = "progressing"
         target.argo_sync_status = "syncing"
-        target.deployed_at = state.now_iso()
+        target.deployed_at = now_iso()
         target.deployed_by = "You (promotion)"
-    state.record_audit(
-        st,
+        await repositories.deployments.save(session, target)
+    await repositories.audit.record(
+        session,
         actor="You",
         actor_role="release-approver",
         action="deployment.promoted",
@@ -393,15 +394,16 @@ async def promote(app_id: str, body: PromoteBody) -> None:
 
 
 @app.post("/api/applications/{app_id}/rollback", status_code=204)
-async def rollback(app_id: str, body: RollbackBody) -> None:
-    st = state.get_state()
-    if not any(a.id == app_id for a in st.applications):
+async def rollback(
+    app_id: str, body: RollbackBody, session: AsyncSession = Depends(get_session)
+) -> None:
+    if not await repositories.applications.get(session, app_id):
         raise HTTPException(status_code=404, detail="application_not_found")
     prod = next(
         (
             d
-            for d in st.deployments
-            if d.application_id == app_id and d.environment == "production"
+            for d in await repositories.deployments.list(session, application_id=app_id)
+            if d.environment == "production"
         ),
         None,
     )
@@ -409,10 +411,11 @@ async def rollback(app_id: str, body: RollbackBody) -> None:
         prod.previous_version = prod.version
         prod.version = body.revision
         prod.status = "rolled-back"
-        prod.deployed_at = state.now_iso()
+        prod.deployed_at = now_iso()
         prod.deployed_by = "You (manual rollback)"
-    state.record_audit(
-        st,
+        await repositories.deployments.save(session, prod)
+    await repositories.audit.record(
+        session,
         actor="You",
         actor_role="release-approver",
         action="deployment.rolled-back",
@@ -424,10 +427,11 @@ async def rollback(app_id: str, body: RollbackBody) -> None:
 
 
 @app.post("/api/audit", status_code=201)
-async def record_audit_event(body: AuditRecordBody) -> AuditEvent:
-    st = state.get_state()
-    return state.record_audit(
-        st,
+async def record_audit_event(
+    body: AuditRecordBody, session: AsyncSession = Depends(get_session)
+) -> AuditEvent:
+    return await repositories.audit.record(
+        session,
         actor=body.actor,
         actor_role=body.actor_role,
         action=body.action,
