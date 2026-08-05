@@ -30,7 +30,9 @@ _FIXTURES = [
 async def _insert_fixtures(session: AsyncSession) -> None:
     for repo, loader in _FIXTURES:
         for obj in loader():
-            await repo.save(session, obj)
+            # loader() returns @cache'd, shared mutable objects — seeding must
+            # never hand out a reference callers (or later code) could mutate.
+            await repo.save(session, obj.model_copy(deep=True))
     await session.execute(insert(tables.demo_seed).values(seeded_at=func.now()))
 
 

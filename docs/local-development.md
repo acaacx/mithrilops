@@ -43,10 +43,12 @@ Defaults (matching `docker-compose.yml`, overridable via `.env`):
 
 Alembic migrations and fixture seeding run automatically at API startup — no
 manual migration step. `POST /api/demo/reset` restores the seeded demo state
-without restarting the process (gated by `DEMO_RESET_ENABLED`, on by
-default locally). Because state now lives in Postgres instead of an
-in-process dict, it survives API restarts; reset is how you get back to a
-known-good demo state without touching the database yourself.
+without restarting the process, but is 404 (absent) unless `DEMO_RESET_ENABLED=1`
+is set — it's disabled by default everywhere, including local dev; `.env.example`
+sets it to `1` so a `.env` copied from it enables it locally. Because state now
+lives in Postgres instead of an in-process dict, it survives API restarts;
+reset is how you get back to a known-good demo state without touching the
+database yourself.
 
 ## Everyday loops
 

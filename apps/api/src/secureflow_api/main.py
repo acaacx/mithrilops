@@ -428,10 +428,12 @@ async def rollback(
 
 @app.post("/api/demo/reset", status_code=204)
 async def demo_reset(session: AsyncSession = Depends(get_session)) -> None:
-    if os.environ.get("DEMO_RESET_ENABLED", "1") == "0":
+    if os.environ.get("DEMO_RESET_ENABLED", "0") != "1":
         # 404, not 403: production does not advertise an endpoint it refuses.
+        # Fail closed: the endpoint is absent unless explicitly enabled.
         raise HTTPException(status_code=404, detail="not_found")
     await seed.reset_demo(session)
+    await session.commit()
     broadcast.publish("state-reset", {"at": now_iso()})
 
 
