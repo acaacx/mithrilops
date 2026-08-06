@@ -20,6 +20,12 @@ variable "reader_principal_ids" {
 }
 variable "tags" { type = map(string) }
 
+variable "enable_private_networking" {
+  description = "Provision private endpoints / VNet integration. Off keeps dev cheap on public endpoints; on for staging and prod."
+  type        = bool
+  default     = true
+}
+
 resource "azurerm_key_vault" "this" {
   name                          = var.name
   resource_group_name           = var.resource_group_name
@@ -29,16 +35,17 @@ resource "azurerm_key_vault" "this" {
   purge_protection_enabled      = true
   soft_delete_retention_days    = 90
   enable_rbac_authorization     = true
-  public_network_access_enabled = false
+  public_network_access_enabled = !var.enable_private_networking
   tags                          = var.tags
 
   network_acls {
-    default_action = "Deny"
+    default_action = var.enable_private_networking ? "Deny" : "Allow"
     bypass         = "AzureServices"
   }
 }
 
 resource "azurerm_private_endpoint" "kv" {
+  count               = var.enable_private_networking ? 1 : 0
   name                = "pe-${var.name}"
   resource_group_name = var.resource_group_name
   location            = var.location

@@ -21,6 +21,12 @@ variable "api_image" {
   type        = string
 }
 
+variable "enable_private_networking" {
+  description = "Private endpoints + VNet integration. Off for dev (cost), on for staging/prod."
+  type        = bool
+  default     = false
+}
+
 locals {
   name_prefix = "secureflow-${var.environment}"
 

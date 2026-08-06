@@ -14,6 +14,12 @@ variable "data_subnet_id" { type = string }
 variable "private_dns_zone_id" { type = string }
 variable "tags" { type = map(string) }
 
+variable "enable_private_networking" {
+  description = "Provision private endpoints / VNet integration. Off keeps dev cheap on public endpoints; on for staging and prod."
+  type        = bool
+  default     = true
+}
+
 # Evidence artifacts (scan reports, SBOMs, attestations) — immutable, private.
 resource "azurerm_storage_account" "this" {
   name                            = var.name
@@ -24,7 +30,7 @@ resource "azurerm_storage_account" "this" {
   min_tls_version                 = "TLS1_2"
   https_traffic_only_enabled      = true
   allow_nested_items_to_be_public = false
-  public_network_access_enabled   = false
+  public_network_access_enabled   = !var.enable_private_networking
   shared_access_key_enabled       = false # Entra-only data-plane auth
   tags                            = var.tags
 
@@ -49,6 +55,7 @@ resource "azurerm_storage_container_immutability_policy" "evidence" {
 }
 
 resource "azurerm_private_endpoint" "blob" {
+  count               = var.enable_private_networking ? 1 : 0
   name                = "pe-${var.name}"
   resource_group_name = var.resource_group_name
   location            = var.location

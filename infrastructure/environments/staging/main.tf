@@ -40,7 +40,9 @@ module "key_vault" {
   data_subnet_id       = module.network.data_subnet_id
   private_dns_zone_id  = module.network.private_dns_zone_ids["privatelink.vaultcore.azure.net"]
   reader_principal_ids = [module.identity.app_principal_id]
-  tags                 = local.tags
+
+  enable_private_networking = var.enable_private_networking
+  tags                      = local.tags
 }
 
 module "postgres" {
@@ -50,7 +52,9 @@ module "postgres" {
   location            = module.resource_group.location
   data_subnet_id      = module.network.data_subnet_id
   private_dns_zone_id = module.network.private_dns_zone_ids["privatelink.postgres.database.azure.com"]
-  tags                = local.tags
+
+  enable_private_networking = var.enable_private_networking
+  tags                      = local.tags
 }
 
 module "storage" {
@@ -60,7 +64,9 @@ module "storage" {
   location            = module.resource_group.location
   data_subnet_id      = module.network.data_subnet_id
   private_dns_zone_id = module.network.private_dns_zone_ids["privatelink.blob.core.windows.net"]
-  tags                = local.tags
+
+  enable_private_networking = var.enable_private_networking
+  tags                      = local.tags
 }
 
 module "container_apps" {
@@ -73,7 +79,9 @@ module "container_apps" {
   app_identity_id            = module.identity.app_identity_id
   api_image                  = var.api_image
   key_vault_uri              = module.key_vault.uri
-  tags                       = local.tags
+
+  enable_private_networking = var.enable_private_networking
+  tags                      = local.tags
 }
 
 output "api_fqdn" {

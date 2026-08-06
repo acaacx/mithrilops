@@ -20,13 +20,19 @@ variable "api_image" {
 variable "key_vault_uri" { type = string }
 variable "tags" { type = map(string) }
 
+variable "enable_private_networking" {
+  description = "Provision private endpoints / VNet integration. Off keeps dev cheap on public endpoints; on for staging and prod."
+  type        = bool
+  default     = true
+}
+
 resource "azurerm_container_app_environment" "this" {
   name                           = "cae-${var.name_prefix}"
   resource_group_name            = var.resource_group_name
   location                       = var.location
   log_analytics_workspace_id     = var.log_analytics_workspace_id
-  infrastructure_subnet_id       = var.app_subnet_id
-  internal_load_balancer_enabled = true
+  infrastructure_subnet_id       = var.enable_private_networking ? var.app_subnet_id : null
+  internal_load_balancer_enabled = var.enable_private_networking
   tags                           = var.tags
 }
 
@@ -43,7 +49,7 @@ resource "azurerm_container_app" "api" {
   }
 
   ingress {
-    external_enabled = false # fronted by Front Door / private ingress only
+    external_enabled = !var.enable_private_networking # private ingress when the VNet is on
     target_port      = 4000
     traffic_weight {
       latest_revision = true
