@@ -99,7 +99,7 @@ Handler-level (permission depends on the request body):
   `changes-requested` → `deployment.request-changes`. Checked via
   `principal.require(...)` after body parse, before any write.
 - `PATCH /api/findings/{id}/status` — `finding.update-status` always; when the
-  new status is `risk-accepted`, additionally `risk.accept`.
+  new status is `accepted-risk`, additionally `risk.accept`.
 
 Behavior touches:
 
@@ -133,7 +133,7 @@ kicks GitOps reconciliation, the closest existing permission.
   issuer, signature from a different key, unknown `kid`, tampered `alg`.
 - 403 set: role lacking the route permission; zero-valid-roles principal;
   approval decision vs. permission mismatches (each of the three decisions);
-  `risk-accepted` status change without `risk.accept`.
+  `accepted-risk` status change without `risk.accept`.
 - SSE: `?access_token=` accepted on `/api/events`, rejected on any other
   route.
 - Disabled mode: routes open, synthetic administrator principal,
