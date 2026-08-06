@@ -43,10 +43,9 @@ flowchart TB
     mockdata --> types
 
     subgraph azure["Azure (Terraform)"]
-        swa["Static Web App (SPA)"]
-        aca["Container Apps (API)"]
-        paas["PostgreSQL · Redis · Key Vault · ACR<br/>(private endpoints, managed identities)"]
-        swa --> aca --> paas
+        aca["Container Apps (API + SPA, same origin)"]
+        paas["PostgreSQL · Key Vault · Storage<br/>(managed identities; private endpoints gated by enable_private_networking)"]
+        aca --> paas
     end
 ```
 
@@ -96,4 +95,4 @@ changes, the fix is Postgres `LISTEN/NOTIFY`, not reintroducing Redis.
 
 ## Azure hosting (Terraform)
 
-Static Web App (SPA) + Container Apps (API, internal ingress) + PostgreSQL Flexible Server (private, zone-redundant, Entra auth) + Redis (private, TLS-only) + Key Vault (RBAC, private endpoint, deny-by-default ACL) + ACR (Premium, private, content trust) + Log Analytics/App Insights + evidence Storage Account (WORM immutability, Entra-only data plane). All PaaS traffic rides private endpoints with private DNS zones. Identities are user-assigned managed identities; CI federates via GitHub OIDC.
+Container Apps serving the API and the built SPA from one origin (`WEB_DIST_DIR` in the image) + PostgreSQL Flexible Server (zone-redundant, Entra auth) + Key Vault (RBAC) + Log Analytics + evidence Storage Account (WORM immutability, Entra-only data plane). Images live in GHCR (public package, pulled credential-free) and are Cosign-signed keyless from CI. Private endpoints, VNet integration, and deny-by-default ACLs are gated by `enable_private_networking` — off in dev (cost), on in staging and prod. Identities are user-assigned managed identities; CI federates via GitHub OIDC for deploys only.

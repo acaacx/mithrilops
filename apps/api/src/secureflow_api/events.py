@@ -1,6 +1,7 @@
 """In-process pub/sub for SSE. One asyncio.Queue per subscriber.
 
-Extension point: replace with Redis pub/sub for multi-replica fan-out.
+Extension point: Postgres LISTEN/NOTIFY for multi-replica fan-out (Redis was
+cut from the stack).
 """
 
 import asyncio
