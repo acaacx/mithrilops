@@ -16,10 +16,6 @@ variable "github_repository" {
   type        = string
 }
 
-variable "alert_email" {
-  type = string
-}
-
 variable "api_image" {
   description = "Digest-pinned image for the API"
   type        = string

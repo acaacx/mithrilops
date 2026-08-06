@@ -12,7 +12,6 @@ variable "resource_group_name" { type = string }
 variable "location" { type = string }
 variable "app_subnet_id" { type = string }
 variable "log_analytics_workspace_id" { type = string }
-variable "acr_login_server" { type = string }
 variable "app_identity_id" { type = string }
 variable "api_image" {
   description = "Fully qualified image reference (digest-pinned in production)"
@@ -43,11 +42,6 @@ resource "azurerm_container_app" "api" {
     identity_ids = [var.app_identity_id]
   }
 
-  registry {
-    server   = var.acr_login_server
-    identity = var.app_identity_id
-  }
-
   ingress {
     external_enabled = false # fronted by Front Door / private ingress only
     target_port      = 4000
@@ -70,10 +64,6 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "KEY_VAULT_URI"
         value = var.key_vault_uri
-      }
-      env {
-        name  = "NODE_ENV"
-        value = "production"
       }
     }
   }
