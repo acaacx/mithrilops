@@ -6,7 +6,8 @@ Extension points:
   validation. Every privileged route must additionally check role permissions
   server-side.
 - Persistence: swap data.py fixture loaders for PostgreSQL + SQLAlchemy.
-- Events: fan out real events from Redis pub/sub instead of the heartbeat timer.
+- Events: fan out cross-instance events via Postgres LISTEN/NOTIFY if the
+  in-process SSE broadcast ever needs to span replicas (Redis was cut).
 """
 
 import asyncio
@@ -15,6 +16,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,6 +30,7 @@ from .db.session import get_session
 from .events import broadcast
 from .logs import stage_logs
 from .simulator import run_simulator
+from .spa import mount_spa
 from .models import (
     Application,
     Approval,
@@ -451,6 +454,13 @@ async def record_audit_event(
         outcome=body.outcome,
         detail=body.detail,
     )
+
+
+# SPA hosting: set WEB_DIST_DIR (the container image does) to serve the built
+# frontend same-origin. Local dev leaves it unset and uses Vite on :5173.
+_web_dist = os.environ.get("WEB_DIST_DIR")
+if _web_dist:
+    mount_spa(app, Path(_web_dist))
 
 
 def run() -> None:
