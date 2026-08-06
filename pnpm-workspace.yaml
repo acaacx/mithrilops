@@ -4,6 +4,13 @@ packages:
 allowBuilds:
   esbuild: true
 
+# brace-expansion DoS bypassing the CVE-2026-14257 mitigation: patched in
+# 1.1.18 (1.x line, via eslint > minimatch@3) and 5.0.9 (5.x line). Both are
+# same-major bumps, so force them rather than except them.
+overrides:
+  brace-expansion@1: ^1.1.18
+  brace-expansion@5: ^5.0.9
+
 auditConfig:
   # GHSA-mh99-v99m-4gvg (brace-expansion DoS). The advisory range `<=5.0.7`
   # semver-matches the 1.x line, so pnpm flags brace-expansion@1.1.16 even
