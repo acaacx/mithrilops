@@ -70,9 +70,7 @@ resource "azurerm_private_dns_zone" "zones" {
   for_each = toset([
     "privatelink.vaultcore.azure.net",
     "privatelink.postgres.database.azure.com",
-    "privatelink.redis.cache.windows.net",
     "privatelink.blob.core.windows.net",
-    "privatelink.azurecr.io",
   ])
   name                = each.value
   resource_group_name = var.resource_group_name
