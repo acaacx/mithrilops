@@ -12,10 +12,6 @@ permissions:
   security-events: write
   packages: read
 
-env:
-  REGISTRY: acrsecureflowdev.azurecr.io
-  IMAGE_NAME: secureflow-api
-
 jobs:
   quality:
     name: Lint, typecheck, test
@@ -108,24 +104,18 @@ jobs:
       id-token: write
       contents: read
       security-events: write
-      packages: read
+      packages: write
       actions: read
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Frontend build
-        run: pnpm --filter @secureflow/web build
-      - name: Container image build
-        run: docker build -f docker/Dockerfile.api -t $REGISTRY/$IMAGE_NAME:${{ github.sha }} .
+      - name: Compute image ref (GHCR requires lowercase)
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/secureflow-api" >> "$GITHUB_ENV"
+      - name: Container image build (includes SPA build stage)
+        run: docker build -f docker/Dockerfile.api -t "$IMAGE:${{ github.sha }}" .
       - name: Image vulnerability scan (Trivy)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
           exit-code: "1"
           severity: CRITICAL,HIGH
           # Block only on vulnerabilities we can actually act on. The
@@ -154,34 +144,31 @@ jobs:
       - name: SBOM generation (Syft)
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          image: ${{ env.IMAGE }}:${{ github.sha }}
           format: spdx-json
           output-file: sbom.spdx.json
-      # Registry publication requires Azure OIDC. When AZURE_CLIENT_ID is unset
-      # these steps skip instead of failing, and activate the moment the
-      # repository variables are configured. Build, scan, and SBOM above always
-      # run, so the security gates are never conditional on cloud access.
-      - name: Azure login (OIDC)
-        if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
-        uses: azure/login@v3
+      # Publication needs only the built-in GITHUB_TOKEN (GHCR) and GitHub's
+      # OIDC identity (Cosign keyless) — nothing here depends on Azure. Build,
+      # scan, and SBOM above run on every event; push/sign only on main.
+      - name: Log in to GHCR
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      - name: Push image to ACR
-        if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
-        run: |
-          az acr login --name ${REGISTRY%%.*}
-          docker push $REGISTRY/$IMAGE_NAME:${{ github.sha }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push image to GHCR
+        if: github.ref == 'refs/heads/main'
+        run: docker push "$IMAGE:${{ github.sha }}"
       - name: Sign image (Cosign, keyless OIDC)
-        if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
+        if: github.ref == 'refs/heads/main'
         # No floating v4 tag is published for cosign-installer; pin exactly.
         uses: sigstore/cosign-installer@v4.1.2
-      - if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
-        run: cosign sign --yes $REGISTRY/$IMAGE_NAME:${{ github.sha }}
+      - if: github.ref == 'refs/heads/main'
+        run: cosign sign --yes "$IMAGE:${{ github.sha }}"
       - name: Attach SBOM attestation
-        if: github.ref == 'refs/heads/main' && vars.AZURE_CLIENT_ID != ''
-        run: cosign attest --yes --predicate sbom.spdx.json --type spdxjson $REGISTRY/$IMAGE_NAME:${{ github.sha }}
+        if: github.ref == 'refs/heads/main'
+        run: cosign attest --yes --predicate sbom.spdx.json --type spdxjson "$IMAGE:${{ github.sha }}"
 
   infrastructure:
     name: Terraform validate & plan
@@ -243,6 +230,8 @@ jobs:
     environment: development
     steps:
       - uses: actions/checkout@v7
+      - name: Compute image ref (GHCR requires lowercase)
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/secureflow-api" >> "$GITHUB_ENV"
       - uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
@@ -253,7 +242,7 @@ jobs:
           az containerapp update \
             --name ca-secureflow-dev-api \
             --resource-group rg-secureflow-dev \
-            --image $REGISTRY/$IMAGE_NAME:${{ github.sha }}
+            --image "$IMAGE:${{ github.sha }}"
       - name: Smoke tests
         run: |
           for i in $(seq 1 10); do
@@ -273,6 +262,8 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@v7
+      - name: Compute image ref (GHCR requires lowercase)
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/secureflow-api" >> "$GITHUB_ENV"
       - uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_PROD_CLIENT_ID }}
@@ -284,13 +275,13 @@ jobs:
           cosign verify \
             --certificate-identity-regexp "https://github.com/${{ github.repository }}" \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-            $REGISTRY/$IMAGE_NAME:${{ github.sha }}
+            $IMAGE:${{ github.sha }}
       - name: Canary rollout
         run: |
           az containerapp revision copy \
             --name ca-secureflow-prod-api \
             --resource-group rg-secureflow-prod \
-            --image $REGISTRY/$IMAGE_NAME:${{ github.sha }}
+            --image "$IMAGE:${{ github.sha }}"
       - name: Post-deployment verification
         run: |
           sleep 60
