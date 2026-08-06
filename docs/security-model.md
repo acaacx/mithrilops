@@ -18,7 +18,8 @@
 | Trivy image scan gates the build on **fixable** CRITICAL/HIGH findings | `ignore-unfixed: true` in the build job — see Accepted advisory exceptions |
 | GitHub → Azure via OIDC federation (no client secrets) | workflow `permissions: id-token: write` + `azurerm use_oidc` |
 | Signature verification before production rollout | `cosign verify` step in the prod job |
-| Terraform: private endpoints, deny-by-default ACLs, RBAC Key Vault, TLS-only Redis/Postgres/Storage, WORM evidence storage, least-privilege role assignments, mandatory tags | `infrastructure/modules/*` |
+| Terraform: private endpoints + deny-by-default ACLs (gated by `enable_private_networking`; on in staging/prod), RBAC Key Vault, TLS-only Postgres/Storage, WORM evidence storage, least-privilege role assignments, mandatory tags | `infrastructure/modules/*` |
+| Container images on GHCR are public **by design** so Container Apps pulls need no registry credential; integrity comes from Cosign keyless signatures verified before prod rollout. A private package would need a PAT in Key Vault — deliberately not built; revisit if the demo hardens | `.github/workflows/ci.yml` build job |
 | Branch-protection & PR-approval requirements | documented + enforced through the `production` GitHub environment reviewers |
 
 ## Accepted advisory exceptions
