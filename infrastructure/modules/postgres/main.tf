@@ -22,6 +22,12 @@ variable "sku_name" {
 }
 variable "tags" { type = map(string) }
 
+variable "enable_private_networking" {
+  description = "Provision private endpoints / VNet integration. Off keeps dev cheap on public endpoints; on for staging and prod."
+  type        = bool
+  default     = true
+}
+
 # Bootstrap admin credential generated at apply time and stored ONLY in Key
 # Vault by the caller; never in tfvars. App access uses Entra authentication.
 resource "random_password" "admin" {
@@ -38,9 +44,9 @@ resource "azurerm_postgresql_flexible_server" "this" {
   storage_mb                    = 65536
   backup_retention_days         = 35
   geo_redundant_backup_enabled  = true
-  public_network_access_enabled = false
-  delegated_subnet_id           = var.data_subnet_id
-  private_dns_zone_id           = var.private_dns_zone_id
+  public_network_access_enabled = !var.enable_private_networking
+  delegated_subnet_id           = var.enable_private_networking ? var.data_subnet_id : null
+  private_dns_zone_id           = var.enable_private_networking ? var.private_dns_zone_id : null
   zone                          = "1"
   tags                          = var.tags
 
