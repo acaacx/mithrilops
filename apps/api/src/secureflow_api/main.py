@@ -24,6 +24,8 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .auth.config import load_auth_config
+from .auth.dependencies import get_principal, get_principal_sse, require_permission
+from .auth.principal import Principal
 from .clock import now_iso
 from .db import migrate, repositories, seed
 from .db.engine import dispose_engine, get_sessionmaker
@@ -109,12 +111,12 @@ async def health() -> dict[str, str]:
     return {"status": "ok", "mode": "mock"}
 
 
-@app.get("/api/applications")
+@app.get("/api/applications", dependencies=[Depends(get_principal)])
 async def list_applications(session: AsyncSession = Depends(get_session)) -> list[Application]:
     return await repositories.applications.list(session)
 
 
-@app.get("/api/applications/{app_id}")
+@app.get("/api/applications/{app_id}", dependencies=[Depends(get_principal)])
 async def get_application(
     app_id: str, session: AsyncSession = Depends(get_session)
 ) -> Application:
@@ -124,7 +126,7 @@ async def get_application(
     return found
 
 
-@app.get("/api/runs")
+@app.get("/api/runs", dependencies=[Depends(get_principal)])
 async def list_runs(
     application_id: str | None = Query(default=None, alias="applicationId"),
     status: PipelineRunStatus | None = None,
@@ -136,7 +138,7 @@ async def list_runs(
     )
 
 
-@app.get("/api/runs/{run_id}")
+@app.get("/api/runs/{run_id}", dependencies=[Depends(get_principal)])
 async def get_run(run_id: str, session: AsyncSession = Depends(get_session)) -> PipelineRun:
     run = await repositories.runs.get(session, run_id)
     if not run:
@@ -144,7 +146,7 @@ async def get_run(run_id: str, session: AsyncSession = Depends(get_session)) -> 
     return run
 
 
-@app.get("/api/runs/{run_id}/stages/{stage_id}/logs")
+@app.get("/api/runs/{run_id}/stages/{stage_id}/logs", dependencies=[Depends(get_principal)])
 async def get_stage_logs(
     run_id: str, stage_id: str, session: AsyncSession = Depends(get_session)
 ) -> list[PipelineLogLine]:
@@ -159,38 +161,38 @@ async def get_stage_logs(
     return stage_logs(run, stage.definition_id)
 
 
-@app.get("/api/findings")
+@app.get("/api/findings", dependencies=[Depends(get_principal)])
 async def list_findings(
     session: AsyncSession = Depends(get_session),
 ) -> list[SecurityFinding]:
     return await repositories.findings.list(session)
 
 
-@app.get("/api/deployments")
+@app.get("/api/deployments", dependencies=[Depends(get_principal)])
 async def list_deployments(session: AsyncSession = Depends(get_session)) -> list[Deployment]:
     return await repositories.deployments.list(session)
 
 
-@app.get("/api/plans")
+@app.get("/api/plans", dependencies=[Depends(get_principal)])
 async def list_plans(
     session: AsyncSession = Depends(get_session),
 ) -> list[InfrastructurePlan]:
     return await repositories.plans.list(session)
 
 
-@app.get("/api/frameworks")
+@app.get("/api/frameworks", dependencies=[Depends(get_principal)])
 async def list_frameworks(
     session: AsyncSession = Depends(get_session),
 ) -> list[ComplianceFramework]:
     return await repositories.frameworks.list(session)
 
 
-@app.get("/api/audit")
+@app.get("/api/audit", dependencies=[Depends(get_principal)])
 async def list_audit(session: AsyncSession = Depends(get_session)) -> list[AuditEvent]:
     return await repositories.audit.list(session)
 
 
-@app.get("/api/findings/{finding_id}")
+@app.get("/api/findings/{finding_id}", dependencies=[Depends(get_principal)])
 async def get_finding(
     finding_id: str, session: AsyncSession = Depends(get_session)
 ) -> SecurityFinding:
@@ -200,7 +202,7 @@ async def get_finding(
     return found
 
 
-@app.get("/api/plans/{plan_id}")
+@app.get("/api/plans/{plan_id}", dependencies=[Depends(get_principal)])
 async def get_plan(
     plan_id: str, session: AsyncSession = Depends(get_session)
 ) -> InfrastructurePlan:
@@ -210,7 +212,7 @@ async def get_plan(
     return plan
 
 
-@app.get("/api/frameworks/{framework_id}")
+@app.get("/api/frameworks/{framework_id}", dependencies=[Depends(get_principal)])
 async def get_framework(
     framework_id: str, session: AsyncSession = Depends(get_session)
 ) -> ComplianceFramework:
@@ -220,12 +222,12 @@ async def get_framework(
     return fw
 
 
-@app.get("/api/integrations")
+@app.get("/api/integrations", dependencies=[Depends(get_principal)])
 async def list_integrations(session: AsyncSession = Depends(get_session)) -> list[Integration]:
     return await repositories.integrations.list(session)
 
 
-@app.get("/api/architecture/{app_id}")
+@app.get("/api/architecture/{app_id}", dependencies=[Depends(get_principal)])
 async def get_architecture(
     app_id: str, session: AsyncSession = Depends(get_session)
 ) -> ArchitectureDiagram:
@@ -235,7 +237,7 @@ async def get_architecture(
     return found[0]
 
 
-@app.get("/api/events")
+@app.get("/api/events", dependencies=[Depends(get_principal_sse)])
 async def events() -> StreamingResponse:
     """SSE stream: simulator events plus a 10s heartbeat."""
 
@@ -263,7 +265,8 @@ def _sse(event: str, payload: object) -> str:
     return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
 
 
-@app.post("/api/runs/{run_id}/stages/{stage_id}/retry", status_code=204)
+@app.post("/api/runs/{run_id}/stages/{stage_id}/retry", status_code=204,
+          dependencies=[Depends(require_permission("pipeline.retry-stage"))])
 async def retry_stage(
     run_id: str, stage_id: str, session: AsyncSession = Depends(get_session)
 ) -> None:
@@ -293,7 +296,7 @@ async def retry_stage(
     )
 
 
-@app.get("/api/runs/{run_id}/approvals")
+@app.get("/api/runs/{run_id}/approvals", dependencies=[Depends(get_principal)])
 async def list_approvals(
     run_id: str, session: AsyncSession = Depends(get_session)
 ) -> list[Approval]:
@@ -302,7 +305,8 @@ async def list_approvals(
     return await repositories.approvals.list(session, run_id=run_id)
 
 
-@app.post("/api/runs/{run_id}/approval", status_code=204)
+@app.post("/api/runs/{run_id}/approval", status_code=204,
+          dependencies=[Depends(get_principal)])
 async def approve_deployment(
     run_id: str, body: ApprovalBody, session: AsyncSession = Depends(get_session)
 ) -> None:
@@ -335,7 +339,8 @@ async def approve_deployment(
     await repositories.runs.save(session, run)
 
 
-@app.patch("/api/findings/{finding_id}/status", status_code=204)
+@app.patch("/api/findings/{finding_id}/status", status_code=204,
+           dependencies=[Depends(require_permission("finding.update-status"))])
 async def update_finding_status(
     finding_id: str, body: FindingStatusBody, session: AsyncSession = Depends(get_session)
 ) -> None:
@@ -360,7 +365,8 @@ async def update_finding_status(
     )
 
 
-@app.post("/api/applications/{app_id}/sync", status_code=204)
+@app.post("/api/applications/{app_id}/sync", status_code=204,
+          dependencies=[Depends(require_permission("pipeline.trigger"))])
 async def sync_application(app_id: str, session: AsyncSession = Depends(get_session)) -> None:
     if not await repositories.applications.get(session, app_id):
         raise HTTPException(status_code=404, detail="application_not_found")
@@ -372,7 +378,8 @@ async def sync_application(app_id: str, session: AsyncSession = Depends(get_sess
 ENV_ORDER: list[EnvironmentName] = ["development", "test", "staging", "production"]
 
 
-@app.post("/api/applications/{app_id}/promote", status_code=204)
+@app.post("/api/applications/{app_id}/promote", status_code=204,
+          dependencies=[Depends(require_permission("deployment.promote"))])
 async def promote(
     app_id: str, body: PromoteBody, session: AsyncSession = Depends(get_session)
 ) -> None:
@@ -403,7 +410,8 @@ async def promote(
     )
 
 
-@app.post("/api/applications/{app_id}/rollback", status_code=204)
+@app.post("/api/applications/{app_id}/rollback", status_code=204,
+          dependencies=[Depends(require_permission("deployment.rollback"))])
 async def rollback(
     app_id: str, body: RollbackBody, session: AsyncSession = Depends(get_session)
 ) -> None:
@@ -436,7 +444,8 @@ async def rollback(
     )
 
 
-@app.post("/api/demo/reset", status_code=204)
+@app.post("/api/demo/reset", status_code=204,
+          dependencies=[Depends(require_permission("settings.manage"))])
 async def demo_reset(session: AsyncSession = Depends(get_session)) -> None:
     if os.environ.get("DEMO_RESET_ENABLED", "0") != "1":
         # 404, not 403: production does not advertise an endpoint it refuses.
@@ -447,7 +456,8 @@ async def demo_reset(session: AsyncSession = Depends(get_session)) -> None:
     broadcast.publish("state-reset", {"at": now_iso()})
 
 
-@app.post("/api/audit", status_code=201)
+@app.post("/api/audit", status_code=201,
+          dependencies=[Depends(get_principal)])
 async def record_audit_event(
     body: AuditRecordBody, session: AsyncSession = Depends(get_session)
 ) -> AuditEvent:
