@@ -62,6 +62,19 @@ gate like the rest of the footprint: with the gate on (staging/prod) it uses
 a delegated subnet + private DNS with public access off; with it off (dev)
 it exposes a public endpoint to keep the environment cheap.
 
+## API environment variables — auth
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `AUTH_ENABLED` | `0` | `1` enforces bearer-JWT auth and server-side RBAC on every `/api` route and requires the two variables below. Off = demo posture, loud startup warning. |
+| `ENTRA_TENANT_ID` | — | Entra tenant GUID. Issuer is derived: `https://login.microsoftonline.com/{tenant}/v2.0`. |
+| `ENTRA_CLIENT_ID` | — | Expected JWT audience (the API's app registration / Application ID URI). |
+| `ENTRA_JWKS_URL` | derived | Optional override of the signing-keys URL; defaults to the tenant's `discovery/v2.0/keys` endpoint. Used by tests to point at fixtures. |
+
+Startup is fail-fast: `AUTH_ENABLED=1` with `ENTRA_TENANT_ID` or
+`ENTRA_CLIENT_ID` unset raises `AuthConfigError` and the process exits —
+misconfiguration can never silently serve open routes.
+
 ## Environment separation
 
 - Separate tfvars + state keys per environment; production ideally a separate subscription with its own OIDC identity (`AZURE_PROD_*` variables).

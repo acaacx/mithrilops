@@ -48,7 +48,7 @@ moderate advisories remain.
 
 - Scanner findings, Argo CD state, GitHub PR actions, Terraform runs — mock providers.
 - AI analysis — deterministic `AIService`; every response carries confidence, evidence, affected assets, risk level, and a human-review disclaimer.
-- Authentication — a role **switcher** stands in for Microsoft Entra ID OIDC. There is no real login; do not deploy this build to an untrusted network without adding it.
+- Authentication — a role **switcher** stands in for Microsoft Entra ID OIDC in the SPA. The API's bearer-token validation is real but off by default (`AUTH_ENABLED=0`); do not deploy this build to an untrusted network without turning it on and giving the SPA a real login.
 
 ## Hard rules encoded
 
@@ -56,6 +56,32 @@ moderate advisories remain.
 2. **Human approval is a GitHub `environment` reviewer gate** in CI — outside the reach of the application entirely.
 3. **Evidence is append-only**: WORM storage policy (400 days) in Terraform; audit log has no delete path.
 
-## Production auth plan (not yet implemented)
+## API auth: implemented, off by default
 
-Entra ID OIDC (auth code + PKCE) in the SPA → access token → API validates issuer/audience/signature, maps group claims to the same `Role` enum, enforces `ROLE_PERMISSIONS` server-side on every privileged route. The UI matrix is a usability layer only; the API check is authoritative.
+Bearer JWT validation (Entra ID shape) and server-side RBAC are implemented in
+`apps/api/src/secureflow_api/auth/`, gated behind `AUTH_ENABLED` (default `0`
+so the demo posture is unchanged; startup logs a loud warning when off).
+
+- **Validation:** PyJWT + cached `PyJWKClient`. Algorithms pinned to `RS256`;
+  audience = `ENTRA_CLIENT_ID`; issuer derived from `ENTRA_TENANT_ID`;
+  required claims `exp`/`iat`/`sub`, 60s leeway. Token problems → 401 with
+  `WWW-Authenticate: Bearer` and a generic detail; permission problems → 403.
+  `/health` stays unauthenticated (Container Apps probes).
+- **Roles:** the token's Entra **app roles** (`roles` claim) carry `Role` enum
+  strings verbatim — a deviation from this doc's original group-claims plan
+  (group→role mapping was rejected: GUID map config plus the 200-group overage
+  edge case). Unknown role values are ignored with a warning; zero valid roles
+  means authenticated but permission-less.
+- **RBAC:** `ROLE_PERMISSIONS` is enforced server-side on every `/api` route —
+  route-level `require_permission(...)` dependencies, plus handler checks where
+  the permission depends on the body (approval decisions, `accepted-risk`).
+  A route-coverage test walks `app.routes` and fails CI on any unauthenticated
+  or permission-less mutating route. The UI matrix is a usability layer only;
+  the API check is authoritative.
+- **SSE:** `?access_token=` is accepted on `/api/events` only (EventSource
+  cannot set headers; RFC 6750 §2.3). Residual risk in `threat-model.md`.
+- **Placeholder tenant:** validation is built and tested against self-signed
+  JWKS fixtures; no real Entra tenant is configured. Tenant/client IDs come
+  from env. The SPA still uses the role switcher and sends no tokens, so
+  enabling `AUTH_ENABLED=1` without a real tenant + MSAL breaks the SPA —
+  expected and documented; token acquisition is the next piece.
