@@ -36,10 +36,10 @@ Release approval authority · pipeline evidence & audit trail · scanner finding
 
 - Least-privilege role assignments in Terraform (scoped custom roles for CI; `AcrPull`/`Key Vault Secrets User` only for the app identity).
 - The seeded finding `find-iam-wide` (subscription-scope Contributor) is the worked example of detecting and remediating this class.
-- UI RBAC is advisory; the authoritative check belongs in the API (documented, partially stubbed).
+- UI RBAC is advisory; the authoritative check is the API's server-side `ROLE_PERMISSIONS` enforcement (`apps/api/src/secureflow_api/auth/`), active when `AUTH_ENABLED=1`. A route-coverage test fails CI on any unprotected mutating route.
 
 ## Top residual risks
 
-1. No real authentication in mock mode ⚠︎ — do not expose beyond localhost.
-2. Server-side authorization not yet enforced (scaffold only).
+1. Auth is off by default (`AUTH_ENABLED=0`) and no real Entra tenant is configured ⚠︎ — with the flag off, do not expose beyond localhost. JWT validation + server-side RBAC are implemented and tested, but the SPA acquires no tokens yet, so enforcement cannot be turned on end-to-end until MSAL wiring and a real tenant land.
+2. SSE query token: `/api/events` accepts `?access_token=` because EventSource cannot send headers (RFC 6750 §2.3). The token can land in access logs of intermediaries. Accepted: token lifetime is short (Entra default ~1h), transport is TLS-only, the API itself does not log query strings, and the endpoint is read-only event notifications. The parameter is rejected on every other route.
 3. Simulated scanners mean no actual vulnerability detection occurs in this build.
