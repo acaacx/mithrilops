@@ -77,6 +77,81 @@ async def client(db_session):
     app.dependency_overrides.clear()
 
 
+# --- auth fixtures ------------------------------------------------------
+
+TEST_TENANT = "11111111-1111-1111-1111-111111111111"
+TEST_AUDIENCE = "api://secureflow-tests"
+TEST_ISSUER = f"https://login.microsoftonline.com/{TEST_TENANT}/v2.0"
+
+
+@pytest.fixture(scope="session")
+def auth_keys():
+    """(primary, imposter) RSA keypairs. Imposter signs 'wrong key' tokens."""
+    from cryptography.hazmat.primitives.asymmetric import rsa
+
+    generate = lambda: rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    return generate(), generate()
+
+
+@pytest.fixture(scope="session")
+def jwks_document(auth_keys):
+    from jwt.algorithms import RSAAlgorithm
+
+    jwk = RSAAlgorithm.to_jwk(auth_keys[0].public_key(), as_dict=True)
+    jwk.update({"kid": "test-key-1", "use": "sig", "alg": "RS256"})
+    return {"keys": [jwk]}
+
+
+@pytest.fixture
+def make_token(auth_keys):
+    import time
+
+    import jwt as pyjwt
+
+    def _make(
+        roles=("administrator",),
+        *,
+        key=None,
+        kid="test-key-1",
+        aud=TEST_AUDIENCE,
+        iss=TEST_ISSUER,
+        exp_delta=300,
+        alg="RS256",
+        drop=(),
+    ):
+        now = int(time.time())
+        claims = {
+            "sub": "user-123",
+            "name": "Test User",
+            "roles": list(roles),
+            "aud": aud,
+            "iss": iss,
+            "iat": now,
+            "exp": now + exp_delta,
+        }
+        for claim in drop:
+            claims.pop(claim)
+        return pyjwt.encode(claims, key or auth_keys[0], algorithm=alg, headers={"kid": kid})
+
+    return _make
+
+
+@pytest.fixture
+def auth_enabled(monkeypatch, jwks_document):
+    """Turn enforcement on and serve the fixture JWKS without any network:
+    PyJWKClient.fetch_data is patched, so kid lookup and key parsing stay real."""
+    from jwt import PyJWKClient
+
+    from secureflow_api.auth import jwks as jwks_module
+
+    monkeypatch.setenv("AUTH_ENABLED", "1")
+    monkeypatch.setenv("ENTRA_TENANT_ID", TEST_TENANT)
+    monkeypatch.setenv("ENTRA_CLIENT_ID", TEST_AUDIENCE)
+    monkeypatch.delenv("ENTRA_JWKS_URL", raising=False)
+    monkeypatch.setattr(PyJWKClient, "fetch_data", lambda self: jwks_document)
+    jwks_module._client.cache_clear()
+
+
 @pytest.fixture
 async def committed_session(seeded_db):
     """Real commit semantics, for tests exercising the seed guard and reset.
