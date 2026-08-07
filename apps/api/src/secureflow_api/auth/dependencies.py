@@ -4,13 +4,14 @@ import logging
 from typing import get_args
 
 import jwt
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException, Request
 from jwt import InvalidTokenError, PyJWKClientError
 
 from ..models import Role
 from . import jwks
-from .config import AuthConfig
-from .principal import Principal
+from .config import AuthConfig, load_auth_config
+from .principal import DEMO_PRINCIPAL, Principal
+from .rbac import Permission
 
 logger = logging.getLogger("secureflow-api")
 
@@ -45,3 +46,37 @@ def authenticate(token: str, config: AuthConfig) -> Principal:
         logger.warning("ignoring unknown roles in token: %s", unknown)
     name = claims.get("name") or claims.get("preferred_username") or claims["sub"]
     return Principal(sub=claims["sub"], name=name, roles=roles)
+
+
+async def get_principal(request: Request) -> Principal:
+    config = load_auth_config()
+    if not config.enabled:
+        return DEMO_PRINCIPAL
+    header = request.headers.get("authorization", "")
+    if not header.lower().startswith("bearer "):
+        raise _unauthorized()
+    return authenticate(header[7:], config)
+
+
+async def get_principal_sse(request: Request) -> Principal:
+    """SSE variant: EventSource cannot set headers, so ?access_token= is
+    accepted here and nowhere else (RFC 6750 §2.3)."""
+    config = load_auth_config()
+    if not config.enabled:
+        return DEMO_PRINCIPAL
+    header = request.headers.get("authorization", "")
+    if header.lower().startswith("bearer "):
+        return authenticate(header[7:], config)
+    token = request.query_params.get("access_token")
+    if not token:
+        raise _unauthorized()
+    return authenticate(token, config)
+
+
+def require_permission(permission: Permission):
+    async def dependency(principal: Principal = Depends(get_principal)) -> Principal:
+        principal.require(permission)
+        return principal
+
+    dependency.required_permission = permission
+    return dependency
