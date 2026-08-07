@@ -305,11 +305,21 @@ async def list_approvals(
     return await repositories.approvals.list(session, run_id=run_id)
 
 
-@app.post("/api/runs/{run_id}/approval", status_code=204,
-          dependencies=[Depends(get_principal)])
+_DECISION_PERMISSION: dict[str, str] = {
+    "approved": "deployment.approve",
+    "rejected": "deployment.reject",
+    "changes-requested": "deployment.request-changes",
+}
+
+
+@app.post("/api/runs/{run_id}/approval", status_code=204)
 async def approve_deployment(
-    run_id: str, body: ApprovalBody, session: AsyncSession = Depends(get_session)
+    run_id: str,
+    body: ApprovalBody,
+    principal: Principal = Depends(get_principal),
+    session: AsyncSession = Depends(get_session),
 ) -> None:
+    principal.require(_DECISION_PERMISSION[body.decision])
     run = await repositories.runs.get(session, run_id, for_update=True)
     if not run:
         raise HTTPException(status_code=404, detail="run_not_found")
@@ -324,7 +334,7 @@ async def approve_deployment(
     )
     if pending:
         pending.decision = body.decision
-        pending.decided_by = "You"
+        pending.decided_by = principal.name
         pending.decided_at = now_iso()
         pending.comment = body.comment
         await repositories.approvals.save(session, pending)
@@ -339,11 +349,15 @@ async def approve_deployment(
     await repositories.runs.save(session, run)
 
 
-@app.patch("/api/findings/{finding_id}/status", status_code=204,
-           dependencies=[Depends(require_permission("finding.update-status"))])
+@app.patch("/api/findings/{finding_id}/status", status_code=204)
 async def update_finding_status(
-    finding_id: str, body: FindingStatusBody, session: AsyncSession = Depends(get_session)
+    finding_id: str,
+    body: FindingStatusBody,
+    principal: Principal = Depends(require_permission("finding.update-status")),
+    session: AsyncSession = Depends(get_session),
 ) -> None:
+    if body.status == "accepted-risk":
+        principal.require("risk.accept")
     finding = await repositories.findings.get(session, finding_id, for_update=True)
     if not finding:
         raise HTTPException(status_code=404, detail="finding_not_found")
