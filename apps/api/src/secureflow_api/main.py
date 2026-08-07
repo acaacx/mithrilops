@@ -23,6 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .auth.config import load_auth_config
 from .clock import now_iso
 from .db import migrate, repositories, seed
 from .db.engine import dispose_engine, get_sessionmaker
@@ -58,6 +59,12 @@ logger = logging.getLogger("secureflow-api")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    auth_config = load_auth_config()  # raises AuthConfigError on misconfig
+    if not auth_config.enabled:
+        logger.warning(
+            "AUTH DISABLED — all routes open. Set AUTH_ENABLED=1 plus "
+            "ENTRA_TENANT_ID/ENTRA_CLIENT_ID to enforce bearer auth."
+        )
     await asyncio.to_thread(migrate.upgrade_to_head)
     async with get_sessionmaker()() as session:
         if await seed.ensure_seeded(session):
