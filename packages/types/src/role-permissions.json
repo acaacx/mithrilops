@@ -1,0 +1,73 @@
+{
+  "developer": [
+    "audit.view",
+    "evidence.download",
+    "pipeline.trigger",
+    "pipeline.retry-stage",
+    "remediation.create"
+  ],
+  "devsecops-engineer": [
+    "audit.view",
+    "evidence.download",
+    "pipeline.trigger",
+    "pipeline.retry-stage",
+    "finding.update-status",
+    "remediation.create",
+    "deployment.request-changes"
+  ],
+  "security-engineer": [
+    "audit.view",
+    "evidence.download",
+    "finding.update-status",
+    "risk.accept",
+    "remediation.create",
+    "deployment.request-changes",
+    "deployment.reject"
+  ],
+  "platform-engineer": [
+    "audit.view",
+    "evidence.download",
+    "pipeline.trigger",
+    "pipeline.retry-stage",
+    "deployment.rollback",
+    "integration.manage"
+  ],
+  "application-owner": [
+    "audit.view",
+    "evidence.download",
+    "deployment.request-changes",
+    "remediation.create",
+    "risk.accept"
+  ],
+  "compliance-reviewer": [
+    "audit.view",
+    "evidence.download",
+    "compliance.review"
+  ],
+  "release-approver": [
+    "audit.view",
+    "evidence.download",
+    "deployment.approve",
+    "deployment.reject",
+    "deployment.request-changes",
+    "deployment.promote",
+    "deployment.rollback"
+  ],
+  "administrator": [
+    "audit.view",
+    "evidence.download",
+    "deployment.approve",
+    "deployment.reject",
+    "deployment.request-changes",
+    "deployment.promote",
+    "deployment.rollback",
+    "pipeline.retry-stage",
+    "pipeline.trigger",
+    "risk.accept",
+    "finding.update-status",
+    "remediation.create",
+    "compliance.review",
+    "integration.manage",
+    "settings.manage"
+  ]
+}
