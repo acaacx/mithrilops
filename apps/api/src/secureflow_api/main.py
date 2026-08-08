@@ -294,6 +294,9 @@ async def retry_stage(
         outcome="success",
         detail=f"Manual retry of '{stage.name}'.",
     )
+    # Commit before the response: get_session's teardown commit runs only
+    # after the response is sent, and clients refetch immediately.
+    await session.commit()
 
 
 @app.get("/api/runs/{run_id}/approvals", dependencies=[Depends(get_principal)])
@@ -347,6 +350,7 @@ async def approve_deployment(
     else:
         run.status = "cancelled" if body.decision == "rejected" else "blocked"
     await repositories.runs.save(session, run)
+    await session.commit()
 
 
 @app.patch("/api/findings/{finding_id}/status", status_code=204)
@@ -377,6 +381,7 @@ async def update_finding_status(
         outcome="success",
         detail=body.reason or "Status updated from the security command center.",
     )
+    await session.commit()
 
 
 @app.post("/api/applications/{app_id}/sync", status_code=204,
@@ -387,6 +392,7 @@ async def sync_application(app_id: str, session: AsyncSession = Depends(get_sess
     for d in await repositories.deployments.list(session, application_id=app_id):
         d.argo_sync_status = "synced"
         await repositories.deployments.save(session, d)
+    await session.commit()
 
 
 ENV_ORDER: list[EnvironmentName] = ["development", "test", "staging", "production"]
@@ -422,6 +428,7 @@ async def promote(
         outcome="success",
         detail=f"Promoted {source.version if source else 'latest'} to {body.to_environment}.",
     )
+    await session.commit()
 
 
 @app.post("/api/applications/{app_id}/rollback", status_code=204,
@@ -456,6 +463,7 @@ async def rollback(
         outcome="success",
         detail=f"Manual rollback to {body.revision}.",
     )
+    await session.commit()
 
 
 @app.post("/api/demo/reset", status_code=204,
@@ -475,7 +483,7 @@ async def demo_reset(session: AsyncSession = Depends(get_session)) -> None:
 async def record_audit_event(
     body: AuditRecordBody, session: AsyncSession = Depends(get_session)
 ) -> AuditEvent:
-    return await repositories.audit.record(
+    event = await repositories.audit.record(
         session,
         actor=body.actor,
         actor_role=body.actor_role,
@@ -485,6 +493,8 @@ async def record_audit_event(
         outcome=body.outcome,
         detail=body.detail,
     )
+    await session.commit()
+    return event
 
 
 # SPA hosting: set WEB_DIST_DIR (the container image does) to serve the built
