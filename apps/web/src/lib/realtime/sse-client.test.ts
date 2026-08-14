@@ -95,4 +95,12 @@ describe("startEventStream auth wiring", () => {
     await vi.advanceTimersByTimeAsync(5000);
     expect(FakeEventSource.instances).toHaveLength(1);
   });
+
+  it("opens no stream when the token getter resolves null (redirect in flight)", async () => {
+    registerTokenGetter(async () => null);
+    const stop = startEventStream(new QueryClient());
+    await vi.advanceTimersByTimeAsync(0);
+    expect(FakeEventSource.instances).toHaveLength(0);
+    stop();
+  });
 });

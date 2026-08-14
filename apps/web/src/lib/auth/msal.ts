@@ -10,6 +10,7 @@ export interface AuthAccount {
 
 let pca: PublicClientApplication | null = null;
 let scopes: string[] = [];
+let redirecting = false;
 
 /**
  * Constructs the MSAL singleton, completes any pending redirect, and either
@@ -37,8 +38,13 @@ export async function initAuth(config: RuntimeConfig): Promise<AuthAccount | nul
   }
   pca.setActiveAccount(account);
   registerTokenGetter(acquireToken);
+  redirecting = false;
   registerUnauthorizedHandler(() => {
-    void pca?.acquireTokenRedirect({ scopes });
+    if (redirecting) return;
+    redirecting = true;
+    pca?.acquireTokenRedirect({ scopes }).catch(() => {
+      redirecting = false;
+    });
   });
   const claims = (account.idTokenClaims ?? {}) as {
     name?: string;

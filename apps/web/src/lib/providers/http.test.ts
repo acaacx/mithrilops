@@ -109,4 +109,15 @@ describe("auth-mode token attach", () => {
     await expect(http.deploymentProvider.listApplications()).rejects.toThrow();
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
+
+  it("invokes the unauthorized handler on a 401 in auth mode even when the token is null (redirect in flight)", async () => {
+    registerTokenGetter(async () => null);
+    const onUnauthorized = vi.fn();
+    registerUnauthorizedHandler(onUnauthorized);
+    fetchMock.mockResolvedValue(okJson({ detail: "invalid_token" }, 401));
+    await expect(http.deploymentProvider.listApplications()).rejects.toThrow();
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+    const [, init] = fetchMock.mock.calls[0]!;
+    expect(new Headers(init?.headers).has("Authorization")).toBe(false);
+  });
 });

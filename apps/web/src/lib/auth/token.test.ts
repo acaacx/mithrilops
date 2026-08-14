@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  authConfigured,
   getAccessToken,
   handleUnauthorized,
   registerTokenGetter,
@@ -25,5 +26,18 @@ describe("token registry", () => {
     registerUnauthorizedHandler(handler);
     handleUnauthorized();
     expect(handler).toHaveBeenCalledOnce();
+  });
+
+  it("authConfigured is false in demo mode, true once a getter is registered", () => {
+    expect(authConfigured()).toBe(false);
+    registerTokenGetter(async () => "tok-123");
+    expect(authConfigured()).toBe(true);
+  });
+
+  it("authConfigured stays true even while a redirect is in flight (getter resolves null)", async () => {
+    registerTokenGetter(async () => null);
+    expect(authConfigured()).toBe(true);
+    await expect(getAccessToken()).resolves.toBeNull();
+    expect(authConfigured()).toBe(true);
   });
 });

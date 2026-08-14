@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useNotifications } from "@/stores/notifications";
-import { getAccessToken } from "@/lib/auth/token";
+import { authConfigured, getAccessToken } from "@/lib/auth/token";
 
 export interface NotificationEvent {
   title: string;
@@ -31,12 +31,20 @@ export function startEventStream(queryClient: QueryClient): () => void {
   };
 
   const connect = async () => {
-    const token = await getAccessToken();
+    const token = await getAccessToken().catch((error: unknown) => {
+      console.error("sse-client: getAccessToken() failed", error);
+      return null;
+    });
     if (closed) return;
-    if (token === null) {
+    if (!authConfigured()) {
       // Demo mode: EventSource's native reconnect is fine — the URL never goes stale.
       source = new EventSource("/api/events");
       attach(source);
+      return;
+    }
+    if (token === null) {
+      // Auth mode, redirect in flight: the page is navigating away, so don't
+      // open an untokened stream.
       return;
     }
     // Auth mode: native reconnect would replay the original (stale) token, so
