@@ -36,8 +36,8 @@ export default function SettingsPage() {
               <Badge color="var(--accent)">{roles.map(titleCase).join(", ")}</Badge>
             </div>
             <p className="text-xs text-fg-faint">
-              Switch roles from the profile menu in the top bar to demo RBAC behavior. In production this comes from
-              Microsoft Entra ID group claims via OIDC — the switcher exists only in the simulated build.
+              Switch roles from the profile menu in the top bar to demo RBAC behavior. When Entra ID
+              sign-in is enabled, roles come from the token's app-role claims and the switcher is hidden.
             </p>
           </CardBody>
         </Card>
