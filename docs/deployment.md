@@ -75,6 +75,29 @@ Startup is fail-fast: `AUTH_ENABLED=1` with `ENTRA_TENANT_ID` or
 `ENTRA_CLIENT_ID` unset raises `AuthConfigError` and the process exits —
 misconfiguration can never silently serve open routes.
 
+None of these need setting by hand: `auth_enabled = true` in an
+environment's tfvars provisions the Entra app registration and injects all
+three into the container app on apply (see below).
+
+## Enabling Entra ID sign-in
+
+1. Set `auth_enabled = true` in
+   `infrastructure/environments/<env>/terraform.tfvars`.
+2. `terraform apply`. This provisions the app registration
+   (`infrastructure/modules/entra-app`: SPA platform, exposed `access`
+   scope, the eight app roles, and a service principal) and injects
+   `AUTH_ENABLED`, `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID` into the container
+   app.
+3. Add `https://<api_fqdn>` (the `api_fqdn` output) to `spa_redirect_uris`
+   in the same tfvars and `terraform apply` again — the registration only
+   has `http://localhost:5173` until this second pass.
+4. Assign users to app roles in the portal: Entra ID → Enterprise
+   applications → the app → **Users and groups** → Add user/group.
+   Deliberately not in terraform (see `security-model.md`).
+5. Verify with an incognito sign-in against the deployed SPA URL: confirm
+   redirect to Microsoft login, a successful callback, and role-appropriate
+   UI.
+
 ## Environment separation
 
 - Separate tfvars + state keys per environment; production ideally a separate subscription with its own OIDC identity (`AZURE_PROD_*` variables).
