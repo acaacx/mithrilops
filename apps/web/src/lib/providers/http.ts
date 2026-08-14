@@ -25,6 +25,7 @@ import type {
   SecurityProvider,
 } from "@secureflow/types";
 import { filterAndSortFindings, filterAndSortRuns, sortAuditEvents } from "./filters";
+import { getAccessToken, handleUnauthorized } from "@/lib/auth/token";
 
 /**
  * HTTP provider implementations. Same-origin `/api/*` paths — the Vite dev
@@ -37,11 +38,19 @@ import { filterAndSortFindings, filterAndSortRuns, sortAuditEvents } from "./fil
  */
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = await getAccessToken(); // null in demo mode
   const response = await fetch(path, {
     ...init,
-    headers: init?.body ? { "Content-Type": "application/json", ...init.headers } : init?.headers,
+    headers: {
+      ...(init?.body ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
   });
   if (!response.ok) {
+    // 401 with a token means it expired or was revoked mid-session: hand off
+    // to MSAL for an interactive redirect, and still surface the error below.
+    if (response.status === 401 && token !== null) handleUnauthorized();
     let detail = `${response.status} ${response.statusText}`;
     try {
       const body = (await response.json()) as { detail?: unknown };
