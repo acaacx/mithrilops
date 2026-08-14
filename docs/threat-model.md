@@ -40,6 +40,6 @@ Release approval authority · pipeline evidence & audit trail · scanner finding
 
 ## Top residual risks
 
-1. Auth is off by default (`AUTH_ENABLED=0`) and no real Entra tenant is configured ⚠︎ — with the flag off, do not expose beyond localhost. JWT validation + server-side RBAC are implemented and tested, but the SPA acquires no tokens yet, so enforcement cannot be turned on end-to-end until MSAL wiring and a real tenant land.
+1. Auth is off by default (`AUTH_ENABLED=0`) ⚠︎ — with the flag off, do not expose beyond localhost. JWT validation, server-side RBAC, and SPA token acquisition (MSAL) are implemented end-to-end; turning it on requires a provisioned Entra tenant (`infrastructure/modules/entra-app`, gated by `auth_enabled` in terraform).
 2. SSE query token: `/api/events` accepts `?access_token=` because EventSource cannot send headers (RFC 6750 §2.3). The token can land in access logs of intermediaries. Accepted: token lifetime is short (Entra default ~1h), transport is TLS-only, the API itself does not log query strings, and the endpoint is read-only event notifications. The parameter is rejected on every other route.
 3. Simulated scanners mean no actual vulnerability detection occurs in this build.
