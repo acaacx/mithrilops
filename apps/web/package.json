@@ -15,6 +15,7 @@
     "e2e:http": "playwright test -c playwright.http.config.ts"
   },
   "dependencies": {
+    "@azure/msal-browser": "^5.18.0",
     "@fontsource-variable/ibm-plex-sans": "^5.1.0",
     "@fontsource/ibm-plex-mono": "^5.1.0",
     "@hookform/resolvers": "^3.10.0",
