@@ -26,6 +26,20 @@ variable "enable_private_networking" {
   default     = true
 }
 
+variable "auth_enabled" {
+  description = "Inject Entra ID JWT enforcement env into the API container. Off preserves the open demo posture."
+  type        = bool
+  default     = false
+}
+variable "entra_tenant_id" {
+  type    = string
+  default = ""
+}
+variable "entra_client_id" {
+  type    = string
+  default = ""
+}
+
 resource "azurerm_container_app_environment" "this" {
   name                           = "cae-${var.name_prefix}"
   resource_group_name            = var.resource_group_name
@@ -70,6 +84,18 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "KEY_VAULT_URI"
         value = var.key_vault_uri
+      }
+
+      dynamic "env" {
+        for_each = var.auth_enabled ? {
+          AUTH_ENABLED    = "1"
+          ENTRA_TENANT_ID = var.entra_tenant_id
+          ENTRA_CLIENT_ID = var.entra_client_id
+        } : {}
+        content {
+          name  = env.key
+          value = env.value
+        }
       }
     }
   }

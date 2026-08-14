@@ -27,6 +27,18 @@ variable "enable_private_networking" {
   default     = false
 }
 
+variable "auth_enabled" {
+  description = "Provision the Entra app registration and turn on API JWT enforcement."
+  type        = bool
+  default     = false
+}
+
+variable "spa_redirect_uris" {
+  description = "SPA redirect URIs for the Entra app registration. Add https://<api_fqdn> after the first apply."
+  type        = list(string)
+  default     = ["http://localhost:5173"]
+}
+
 locals {
   name_prefix = "secureflow-${var.environment}"
 
