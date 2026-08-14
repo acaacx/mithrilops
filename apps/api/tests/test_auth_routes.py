@@ -8,6 +8,10 @@ from secureflow_api.main import app
 # get_principal and check permissions in the handler (Task 8).
 HANDLER_CHECKED = {"/api/runs/{run_id}/approval", "/api/audit"}
 
+# Routes that are open by design: the SPA must read auth configuration before
+# it can acquire a token. Tenant/client IDs are public in any SPA flow.
+OPEN_API_ROUTES = {"/api/config"}
+
 
 def _api_routes():
     return [
@@ -21,6 +25,8 @@ def _auth_calls(route):
 
 def test_every_api_route_authenticates():
     for route in _api_routes():
+        if route.path in OPEN_API_ROUTES:
+            continue
         calls = _auth_calls(route)
         assert any(
             c in (authdeps.get_principal, authdeps.get_principal_sse)
@@ -43,6 +49,25 @@ def test_every_mutating_route_declares_permission():
 def test_health_stays_open():
     health = next(r for r in app.routes if isinstance(r, APIRoute) and r.path == "/health")
     assert not _auth_calls(health)
+
+
+def test_config_stays_open():
+    route = next(
+        r for r in app.routes if isinstance(r, APIRoute) and r.path == "/api/config"
+    )
+    assert not _auth_calls(route)
+
+
+async def test_config_disabled_mode(client):
+    response = await client.get("/api/config")
+    assert response.status_code == 200
+    assert response.json() == {"authEnabled": False, "tenantId": "", "clientId": ""}
+
+
+async def test_config_enabled_mode(auth_enabled, client):
+    body = (await client.get("/api/config")).json()
+    assert body["authEnabled"] is True
+    assert body["tenantId"] != "" and body["clientId"] != ""
 
 
 async def test_get_requires_token_when_enabled(auth_enabled, client):

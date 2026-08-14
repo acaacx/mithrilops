@@ -111,6 +111,18 @@ async def health() -> dict[str, str]:
     return {"status": "ok", "mode": "mock"}
 
 
+@app.get("/api/config")
+async def get_config() -> dict[str, object]:
+    # Open by design: the SPA needs this before it can acquire a token.
+    # Tenant/client IDs are public values in any SPA flow.
+    config = load_auth_config()
+    return {
+        "authEnabled": config.enabled,
+        "tenantId": config.tenant_id,
+        "clientId": config.client_id,
+    }
+
+
 @app.get("/api/applications", dependencies=[Depends(get_principal)])
 async def list_applications(session: AsyncSession = Depends(get_session)) -> list[Application]:
     return await repositories.applications.list(session)
