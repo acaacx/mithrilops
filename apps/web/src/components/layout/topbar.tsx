@@ -35,7 +35,7 @@ const NOTIF_COLORS = {
 
 export function Topbar() {
   const navigate = useNavigate();
-  const { role, userName, environment, theme, setRole, setEnvironment, toggleTheme } =
+  const { roles, userName, environment, theme, setRole, setEnvironment, toggleTheme } =
     useSession();
   const notifications = useNotifications((s) => s.items);
   const markAllRead = useNotifications((s) => s.markAllRead);
@@ -160,7 +160,7 @@ export function Topbar() {
               </span>
               <span className="hidden text-left leading-tight md:block">
                 <span className="block text-xs font-medium text-fg">{userName}</span>
-                <span className="block text-[10px] text-fg-faint">{titleCase(role)}</span>
+                <span className="block text-[10px] text-fg-faint">{roles.map(titleCase).join(", ")}</span>
               </span>
             </Button>
           </DropdownTrigger>
@@ -173,7 +173,7 @@ export function Topbar() {
             {ROLES.map((r) => (
               <DropdownItem key={r} onSelect={() => setRole(r as Role)}>
                 <span className="flex-1">{titleCase(r)}</span>
-                {r === role && <Badge color="var(--accent)">Active</Badge>}
+                {roles.includes(r) && <Badge color="var(--accent)">Active</Badge>}
               </DropdownItem>
             ))}
           </DropdownContent>

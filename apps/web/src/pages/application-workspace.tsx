@@ -47,7 +47,7 @@ export default function ApplicationWorkspacePage() {
   const { data: plans } = usePlans(appId);
   const { data: diagram } = useArchitecture(appId);
   const { data: audit } = useAuditEvents();
-  const role = useSession((s) => s.role);
+  const roles = useSession((s) => s.roles);
 
   const latestRun = runs?.[0];
   const openFindings = useMemo(
@@ -330,7 +330,7 @@ export default function ApplicationWorkspacePage() {
 
         <TabsContent value="settings">
           <Card className="max-w-xl">
-            <CardHeader title="Application settings" subtitle={`Visible read-only for role: ${titleCase(role)}`} />
+            <CardHeader title="Application settings" subtitle={`Visible read-only for role: ${roles.map(titleCase).join(", ")}`} />
             <CardBody>
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between gap-3"><dt className="text-fg-faint">Argo CD application</dt><dd className="font-mono text-fg">{app.argoAppName}</dd></div>

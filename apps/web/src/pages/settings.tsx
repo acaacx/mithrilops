@@ -10,7 +10,7 @@ import { Check, Minus } from "lucide-react";
 import { Table, Td, Th, Tr } from "@/components/ui/table";
 
 export default function SettingsPage() {
-  const { role, theme, toggleTheme } = useSession();
+  const { roles, theme, toggleTheme } = useSession();
 
   return (
     <div className="mx-auto max-w-[1200px] p-6 rise-in">
@@ -33,7 +33,7 @@ export default function SettingsPage() {
           <CardBody className="space-y-2 text-sm">
             <div className="flex justify-between gap-3">
               <span className="text-fg-faint">Active role</span>
-              <Badge color="var(--accent)">{titleCase(role)}</Badge>
+              <Badge color="var(--accent)">{roles.map(titleCase).join(", ")}</Badge>
             </div>
             <p className="text-xs text-fg-faint">
               Switch roles from the profile menu in the top bar to demo RBAC behavior. In production this comes from
