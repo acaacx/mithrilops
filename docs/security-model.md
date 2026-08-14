@@ -48,7 +48,7 @@ moderate advisories remain.
 
 - Scanner findings, Argo CD state, GitHub PR actions, Terraform runs — mock providers.
 - AI analysis — deterministic `AIService`; every response carries confidence, evidence, affected assets, risk level, and a human-review disclaimer.
-- Authentication — a role **switcher** stands in for Microsoft Entra ID OIDC in the SPA. The API's bearer-token validation is real but off by default (`AUTH_ENABLED=0`); do not deploy this build to an untrusted network without turning it on and giving the SPA a real login.
+- Authentication — demo posture only: a role **switcher** stands in for sign-in when `AUTH_ENABLED=0`, the default everywhere including production. Real Microsoft Entra ID sign-in (MSAL redirect flow, wired end-to-end) turns on with `AUTH_ENABLED=1` plus a provisioned tenant — see API auth below.
 
 ## Hard rules encoded
 
@@ -79,9 +79,27 @@ so the demo posture is unchanged; startup logs a loud warning when off).
   or permission-less mutating route. The UI matrix is a usability layer only;
   the API check is authoritative.
 - **SSE:** `?access_token=` is accepted on `/api/events` only (EventSource
-  cannot set headers; RFC 6750 §2.3). Residual risk in `threat-model.md`.
-- **Placeholder tenant:** validation is built and tested against self-signed
-  JWKS fixtures; no real Entra tenant is configured. Tenant/client IDs come
-  from env. The SPA still uses the role switcher and sends no tokens, so
-  enabling `AUTH_ENABLED=1` without a real tenant + MSAL breaks the SPA —
-  expected and documented; token acquisition is the next piece.
+  cannot set headers; RFC 6750 §2.3). In auth mode the SPA re-acquires a
+  fresh token and opens a new `EventSource` on drop instead of relying on
+  native reconnect, which would replay the stale token in the URL. Residual
+  risk in `threat-model.md`.
+- **SPA wiring:** the SPA reads `GET /api/config` at bootstrap — an open
+  route alongside `/health`; tenant/client IDs are not secret, they appear in
+  the redirect URL of any OIDC flow. `authEnabled: false` renders the demo UI
+  unchanged, role switcher and all, and never loads MSAL. `authEnabled: true`
+  lazy-loads `@azure/msal-browser` and runs a `loginRedirect` sign-in: the
+  role switcher is hidden, roles come straight from the token's app-role
+  claims, and `useCan` unions permissions across roles client-side —
+  mirroring, not replacing, the server's `permissions_for` check, which
+  stays authoritative. A config-fetch or MSAL-init failure renders an error
+  splash; there is no silent fallback to demo mode, since that would mask
+  misconfiguration as a working demo.
+- **Tenant:** pytest validation runs against self-signed JWKS fixtures; a
+  real tenant is provisioned via terraform `infrastructure/modules/entra-app`
+  — one `azuread_application` covering the SPA redirect URIs, the exposed
+  `access` scope, and the eight app roles, plus its service principal.
+  Setting `auth_enabled = true` at the environment level (off by default)
+  provisions the registration and injects `AUTH_ENABLED`, `ENTRA_TENANT_ID`,
+  and `ENTRA_CLIENT_ID` into the container app automatically. User→role
+  assignment happens per-person in the Entra portal (Enterprise application →
+  Users and groups), not in terraform.
