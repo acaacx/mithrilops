@@ -21,6 +21,15 @@ export async function getAccessToken(): Promise<string | null> {
   return getter ? getter() : null;
 }
 
+/**
+ * True once an auth-mode token getter has been registered. Distinguishes
+ * "demo mode" from "auth mode, redirect in flight" — both of which see
+ * getAccessToken() resolve to null.
+ */
+export function authConfigured(): boolean {
+  return getter !== null;
+}
+
 /** Called on a 401 in auth mode: triggers an interactive re-auth redirect. */
 export function handleUnauthorized(): void {
   unauthorized?.();

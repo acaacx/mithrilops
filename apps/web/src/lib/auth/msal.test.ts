@@ -79,4 +79,16 @@ describe("initAuth", () => {
     await expect(getAccessToken()).resolves.toBeNull();
     expect(mocks.instance.acquireTokenRedirect).toHaveBeenCalled();
   });
+
+  it("guards the unauthorized handler against a redirect storm from concurrent 401s", async () => {
+    const { initAuth } = await import("./msal");
+    const { handleUnauthorized } = await import("./token");
+    mocks.instance.getAllAccounts.mockReturnValue([ACCOUNT]);
+    mocks.instance.acquireTokenRedirect.mockImplementation(() => new Promise(() => {}));
+    await initAuth(CONFIG);
+    handleUnauthorized();
+    handleUnauthorized();
+    handleUnauthorized();
+    expect(mocks.instance.acquireTokenRedirect).toHaveBeenCalledTimes(1);
+  });
 });
