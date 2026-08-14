@@ -6,9 +6,7 @@ import "./index.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
-import { fetchRuntimeConfig } from "@/lib/auth/config";
-import { dataSource } from "@/lib/providers";
-import { useSession } from "@/stores/session";
+import { bootstrap } from "@/lib/auth/bootstrap";
 
 const root = createRoot(document.getElementById("root")!);
 
@@ -35,27 +33,4 @@ function renderError(message: string) {
   );
 }
 
-async function bootstrap() {
-  // Memory mode has no API to ask; it is always the demo experience.
-  if (dataSource === "memory") return renderApp();
-
-  let config;
-  try {
-    config = await fetchRuntimeConfig();
-  } catch {
-    return renderError("Could not load runtime configuration from the API.");
-  }
-  if (!config.authEnabled) return renderApp();
-
-  try {
-    const { initAuth } = await import("@/lib/auth/msal");
-    const account = await initAuth(config);
-    if (!account) return; // loginRedirect is navigating away
-    useSession.getState().setAuthSession(account.name, account.roles);
-    renderApp();
-  } catch {
-    renderError("Sign-in failed. Check the Microsoft Entra ID configuration.");
-  }
-}
-
-void bootstrap();
+void bootstrap({ renderApp, renderError });
