@@ -69,6 +69,13 @@ module "storage" {
   tags                      = local.tags
 }
 
+module "entra_app" {
+  count             = var.auth_enabled ? 1 : 0
+  source            = "../../modules/entra-app"
+  display_name      = local.name_prefix
+  spa_redirect_uris = var.spa_redirect_uris
+}
+
 module "container_apps" {
   source                     = "../../modules/container-apps"
   name_prefix                = local.name_prefix
@@ -81,6 +88,9 @@ module "container_apps" {
   key_vault_uri              = module.key_vault.uri
 
   enable_private_networking = var.enable_private_networking
+  auth_enabled              = var.auth_enabled
+  entra_tenant_id           = var.auth_enabled ? module.entra_app[0].tenant_id : ""
+  entra_client_id           = var.auth_enabled ? module.entra_app[0].client_id : ""
   tags                      = local.tags
 }
 
