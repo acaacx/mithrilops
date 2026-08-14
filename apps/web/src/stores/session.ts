@@ -1,26 +1,31 @@
 import { create } from "zustand";
 import type { EnvironmentName, Permission, Role } from "@secureflow/types";
-import { hasPermission } from "@/lib/rbac";
+import { rolesHavePermission } from "@/lib/rbac";
 
 interface SessionState {
-  role: Role;
+  roles: Role[];
   userName: string;
+  /** True when identity came from an Entra ID token; hides the demo role switcher. */
+  authMode: boolean;
   environment: EnvironmentName | "all";
   theme: "dark" | "light";
   sidebarCollapsed: boolean;
   setRole: (role: Role) => void;
+  setAuthSession: (userName: string, roles: Role[]) => void;
   setEnvironment: (environment: EnvironmentName | "all") => void;
   toggleTheme: () => void;
   toggleSidebar: () => void;
 }
 
 export const useSession = create<SessionState>((set) => ({
-  role: "devsecops-engineer",
+  roles: ["devsecops-engineer"],
   userName: "Rowan Ashford",
+  authMode: false,
   environment: "all",
   theme: "dark",
   sidebarCollapsed: false,
-  setRole: (role) => set({ role }),
+  setRole: (role) => set({ roles: [role] }),
+  setAuthSession: (userName, roles) => set({ userName, roles, authMode: true }),
   setEnvironment: (environment) => set({ environment }),
   toggleTheme: () =>
     set((s) => {
@@ -32,5 +37,5 @@ export const useSession = create<SessionState>((set) => ({
 }));
 
 export function useCan(permission: Permission): boolean {
-  return useSession((s) => hasPermission(s.role, permission));
+  return useSession((s) => rolesHavePermission(s.roles, permission));
 }

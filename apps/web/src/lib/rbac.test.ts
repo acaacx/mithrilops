@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PERMISSIONS, ROLES } from "@secureflow/types";
-import { ROLE_PERMISSIONS, hasPermission } from "./rbac";
+import { ROLE_PERMISSIONS, hasPermission, rolesHavePermission } from "./rbac";
 
 describe("RBAC matrix", () => {
   it("defines permissions for every role", () => {
@@ -41,5 +41,17 @@ describe("RBAC matrix", () => {
     for (const role of ROLES) {
       expect(hasPermission(role, "audit.view")).toBe(true);
     }
+  });
+});
+
+describe("rolesHavePermission", () => {
+  it("unions permissions across roles like the server", () => {
+    // developer alone cannot approve; release-approver can.
+    expect(rolesHavePermission(["developer"], "deployment.approve")).toBe(false);
+    expect(rolesHavePermission(["developer", "release-approver"], "deployment.approve")).toBe(true);
+  });
+
+  it("returns false for an empty roles array", () => {
+    expect(rolesHavePermission([], "audit.view")).toBe(false);
   });
 });
