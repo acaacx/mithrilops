@@ -4,6 +4,7 @@ import {
   Bell,
   CircleAlert,
   HelpCircle,
+  LogOut,
   Moon,
   Search,
   Sun,
@@ -35,7 +36,7 @@ const NOTIF_COLORS = {
 
 export function Topbar() {
   const navigate = useNavigate();
-  const { roles, userName, environment, theme, setRole, setEnvironment, toggleTheme } =
+  const { roles, userName, authMode, environment, theme, setRole, setEnvironment, toggleTheme } =
     useSession();
   const notifications = useNotifications((s) => s.items);
   const markAllRead = useNotifications((s) => s.markAllRead);
@@ -165,17 +166,38 @@ export function Topbar() {
             </Button>
           </DropdownTrigger>
           <DropdownContent align="end" className="w-64">
-            <DropdownLabel>
-              <span className="flex items-center gap-1.5">
-                <UserRound size={12} aria-hidden /> Simulated role (RBAC demo)
-              </span>
-            </DropdownLabel>
-            {ROLES.map((r) => (
-              <DropdownItem key={r} onSelect={() => setRole(r as Role)}>
-                <span className="flex-1">{titleCase(r)}</span>
-                {roles.includes(r) && <Badge color="var(--accent)">Active</Badge>}
-              </DropdownItem>
-            ))}
+            {authMode ? (
+              <>
+                <DropdownLabel>
+                  <span className="flex items-center gap-1.5">
+                    <UserRound size={12} aria-hidden /> Signed in with Microsoft Entra ID
+                  </span>
+                </DropdownLabel>
+                <DropdownItem
+                  onSelect={() => {
+                    void import("@/lib/auth/msal").then((m) => m.signOut());
+                  }}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <LogOut size={12} aria-hidden /> Sign out
+                  </span>
+                </DropdownItem>
+              </>
+            ) : (
+              <>
+                <DropdownLabel>
+                  <span className="flex items-center gap-1.5">
+                    <UserRound size={12} aria-hidden /> Simulated role (RBAC demo)
+                  </span>
+                </DropdownLabel>
+                {ROLES.map((r) => (
+                  <DropdownItem key={r} onSelect={() => setRole(r as Role)}>
+                    <span className="flex-1">{titleCase(r)}</span>
+                    {roles.includes(r as Role) && <Badge color="var(--accent)">Active</Badge>}
+                  </DropdownItem>
+                ))}
+              </>
+            )}
           </DropdownContent>
         </Dropdown>
       </div>
