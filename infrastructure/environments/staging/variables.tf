@@ -34,9 +34,9 @@ variable "auth_enabled" {
 }
 
 variable "spa_redirect_uris" {
-  description = "SPA redirect URIs for the Entra app registration. Add https://<api_fqdn> after the first apply."
+  description = "SPA redirect URIs for the Entra app registration. Set to [\"https://<api_fqdn>\"] after the first apply."
   type        = list(string)
-  default     = ["http://localhost:5173"]
+  default     = []
 }
 
 locals {

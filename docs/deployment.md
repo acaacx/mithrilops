@@ -88,9 +88,11 @@ three into the container app on apply (see below).
    scope, the eight app roles, and a service principal) and injects
    `AUTH_ENABLED`, `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID` into the container
    app.
-3. Add `https://<api_fqdn>` (the `api_fqdn` output) to `spa_redirect_uris`
-   in the same tfvars and `terraform apply` again — the registration only
-   has `http://localhost:5173` until this second pass.
+3. Set `spa_redirect_uris = ["https://<api_fqdn>"]` (the `api_fqdn` output)
+   in the same tfvars and `terraform apply` again — staging/prod default to
+   an empty list, so the registration has no redirect URI until this second
+   pass. (`http://localhost:5173` is dev-only, for local development
+   against the dev tenant.)
 4. Assign users to app roles in the portal: Entra ID → Enterprise
    applications → the app → **Users and groups** → Add user/group.
    Deliberately not in terraform (see `security-model.md`).
