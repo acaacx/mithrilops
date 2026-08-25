@@ -49,18 +49,52 @@ variables activates the skipped steps with no workflow edit.
 
 ## Database
 
-`DATABASE_URL` will flow Key Vault → Container App secret → env var, using
-password auth (Terraform wiring not yet in place; the module generates the
-admin password but does not yet store it in Key Vault or inject it into the
-Container App); a managed-identity/Entra token in place of the password is a
-later change. Alembic migrations run at app startup (FastAPI lifespan,
-under an advisory lock), not as a separate deploy step — one code path
-covers local dev, CI, and the container.
+`DATABASE_URL` flows Key Vault → Container App secret → env var, using
+password auth; a managed-identity/Entra token in place of the password is a
+later change. The wiring, end to end:
+
+1. `modules/postgres` generates the admin password (`random_password`, no
+   special characters, never in tfvars), creates the `secureflow` database on
+   the server, and emits a sensitive `database_url` output of the form
+   `postgresql+asyncpg://sfadmin:<pw>@<fqdn>:5432/secureflow?ssl=require`.
+2. `modules/key-vault` stores it as the secret **`database-url`**. The apply
+   identity (`data.azurerm_client_config.current.object_id`) is granted
+   **Key Vault Secrets Officer** to write it; the app's managed identity keeps
+   only **Key Vault Secrets User**.
+3. `modules/container-apps` declares a container app `secret` block that is a
+   *Key Vault reference* — the app identity resolves
+   `key_vault_secret_id` at revision start, so the value never lands in the
+   container app resource. The reference is **versionless**, so a rotated
+   password is picked up without a Terraform-visible revision change.
+4. The container gets `DATABASE_URL` via `secret_name = "database-url"`.
+
+`ssl=require` is not optional: the flexible server runs with
+`require_secure_transport` on, and asyncpg takes SQLAlchemy's `ssl` query
+parameter, not libpq's `sslmode`.
+
+Alembic migrations run at app startup (FastAPI lifespan, under an advisory
+lock), not as a separate deploy step — one code path covers local dev, CI, and
+the container.
+
+**Rotating the password:** `terraform taint module.postgres.random_password.admin`
+then apply. The new value lands in a new secret version and the versionless
+reference resolves to it on the next revision restart.
 
 `infrastructure/modules/postgres` honors the `enable_private_networking`
 gate like the rest of the footprint: with the gate on (staging/prod) it uses
 a delegated subnet + private DNS with public access off; with it off (dev)
-it exposes a public endpoint to keep the environment cheap.
+it exposes a public endpoint to keep the environment cheap. In that public
+mode the module also creates an `AllowAzureServices` firewall rule
+(`0.0.0.0`–`0.0.0.0`, Azure's "allow any Azure service" pseudo-range, *not*
+`0.0.0.0/0`) — without it the container app, which egresses from an
+Azure-owned address, cannot reach the server at all. Private mode creates no
+firewall rule.
+
+**First-apply trap:** the Key Vault Secrets Officer assignment and the secret
+that depends on it are created in the same apply, and Azure RBAC propagation
+lags role creation by up to a few minutes. If the apply fails writing
+`database-url` with a 403, re-run `terraform apply` — the second pass
+succeeds. Nothing else is needed.
 
 ## API environment variables — auth
 
