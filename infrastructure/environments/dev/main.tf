@@ -1,3 +1,7 @@
+# The identity running terraform — granted Key Vault Secrets Officer so the
+# apply can write the database-url secret. Nothing else uses it.
+data "azurerm_client_config" "current" {}
+
 module "resource_group" {
   source   = "../../modules/resource-group"
   name     = "rg-${local.name_prefix}"
@@ -40,6 +44,9 @@ module "key_vault" {
   data_subnet_id       = module.network.data_subnet_id
   private_dns_zone_id  = module.network.private_dns_zone_ids["privatelink.vaultcore.azure.net"]
   reader_principal_ids = [module.identity.app_principal_id]
+
+  officer_principal_ids = [data.azurerm_client_config.current.object_id]
+  database_url          = module.postgres.database_url
 
   enable_private_networking = var.enable_private_networking
   tags                      = local.tags
@@ -86,12 +93,18 @@ module "container_apps" {
   app_identity_id            = module.identity.app_identity_id
   api_image                  = var.api_image
   key_vault_uri              = module.key_vault.uri
+  database_url_secret_id     = module.key_vault.database_url_secret_id
 
   enable_private_networking = var.enable_private_networking
   auth_enabled              = var.auth_enabled
   entra_tenant_id           = var.auth_enabled ? module.entra_app[0].tenant_id : ""
   entra_client_id           = var.auth_enabled ? module.entra_app[0].client_id : ""
   tags                      = local.tags
+
+  # The secret id alone does not order the app behind the app identity's
+  # Key Vault Secrets User assignment; without this the first revision can
+  # start before it can read database-url.
+  depends_on = [module.key_vault]
 }
 
 output "api_fqdn" {
