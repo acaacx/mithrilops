@@ -24,6 +24,13 @@ COPY --from=deps /app/.venv ./.venv
 COPY --from=deps /app/apps/api ./apps/api
 COPY --from=web /app/apps/web/dist ./web-dist
 
+# pip is unused at runtime (the venv is fully baked by uv) and its vendored
+# msgpack/setuptools copies trip the image CVE gate (GHSA-6v7p-g79w-8964,
+# CVE-2025-47273 via pip/_vendor/vendor.txt); remove it and the ensurepip
+# bundle entirely.
+RUN /usr/local/bin/python3 -m pip uninstall -y pip \
+  && rm -rf /usr/local/lib/python3.13/ensurepip
+
 # Never run as root; drop privileges to a dedicated user.
 RUN groupadd -g 10001 app && useradd -m -u 10001 -g app app
 USER app
