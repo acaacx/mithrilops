@@ -18,6 +18,10 @@ variable "api_image" {
   type        = string
 }
 variable "key_vault_uri" { type = string }
+variable "database_url_secret_id" {
+  description = "Versionless Key Vault secret id holding DATABASE_URL. Resolved at runtime by the app's managed identity."
+  type        = string
+}
 variable "tags" { type = map(string) }
 
 variable "enable_private_networking" {
@@ -62,6 +66,15 @@ resource "azurerm_container_app" "api" {
     identity_ids = [var.app_identity_id]
   }
 
+  # Key Vault reference, not a literal: the value never enters terraform state
+  # for this resource, and the app identity (Key Vault Secrets User) resolves
+  # it on revision start.
+  secret {
+    name                = "database-url"
+    identity            = var.app_identity_id
+    key_vault_secret_id = var.database_url_secret_id
+  }
+
   ingress {
     external_enabled = !var.enable_private_networking # private ingress when the VNet is on
     target_port      = 4000
@@ -84,6 +97,11 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "KEY_VAULT_URI"
         value = var.key_vault_uri
+      }
+
+      env {
+        name        = "DATABASE_URL"
+        secret_name = "database-url"
       }
 
       dynamic "env" {

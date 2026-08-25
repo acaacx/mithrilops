@@ -18,6 +18,16 @@ variable "reader_principal_ids" {
   type        = list(string)
   default     = []
 }
+variable "officer_principal_ids" {
+  description = "Principals granted Key Vault Secrets Officer so Terraform can write the secrets below. The apply identity, nothing else."
+  type        = list(string)
+  default     = []
+}
+variable "database_url" {
+  description = "Postgres connection URL stored as the database-url secret and referenced by the container app."
+  type        = string
+  sensitive   = true
+}
 variable "tags" { type = map(string) }
 
 variable "enable_private_networking" {
@@ -72,5 +82,29 @@ resource "azurerm_role_assignment" "secrets_user" {
   principal_id         = each.value
 }
 
+resource "azurerm_role_assignment" "secrets_officer" {
+  for_each             = toset(var.officer_principal_ids)
+  scope                = azurerm_key_vault.this.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = each.value
+}
+
+# The one secret the app cannot start without. Written by the apply identity,
+# read by the app's managed identity through a versionless reference so a
+# rotated password is picked up without a container app revision change.
+resource "azurerm_key_vault_secret" "db_url" {
+  # checkov:skip=CKV_AZURE_41: a hard expiry on the connection URL takes the
+  # API down the moment it lapses. Rotation is driven by re-applying the
+  # postgres module (new password -> new secret version), not by expiry.
+  name         = "database-url"
+  value        = var.database_url
+  key_vault_id = azurerm_key_vault.this.id
+  content_type = "text/plain"
+  tags         = var.tags
+
+  depends_on = [azurerm_role_assignment.secrets_officer]
+}
+
 output "id" { value = azurerm_key_vault.this.id }
 output "uri" { value = azurerm_key_vault.this.vault_uri }
+output "database_url_secret_id" { value = azurerm_key_vault_secret.db_url.versionless_id }

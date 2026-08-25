@@ -34,7 +34,7 @@ Release approval authority · pipeline evidence & audit trail · scanner finding
 
 ## Elevation of privilege
 
-- Least-privilege role assignments in Terraform (scoped custom roles for CI; `AcrPull`/`Key Vault Secrets User` only for the app identity).
+- Least-privilege role assignments in Terraform (scoped custom roles for CI; `AcrPull`/`Key Vault Secrets User` only for the app identity). Write access to Key Vault (`Key Vault Secrets Officer`) is held solely by the Terraform apply identity, which the app never uses.
 - The seeded finding `find-iam-wide` (subscription-scope Contributor) is the worked example of detecting and remediating this class.
 - UI RBAC is advisory; the authoritative check is the API's server-side `ROLE_PERMISSIONS` enforcement (`apps/api/src/secureflow_api/auth/`), active when `AUTH_ENABLED=1`. A route-coverage test fails CI on any unprotected mutating route.
 
