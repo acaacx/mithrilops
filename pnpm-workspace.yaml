@@ -15,10 +15,10 @@ overrides:
   # Dev-only reach today (eslint > @eslint/eslintrc), but the override keeps
   # any future direct use patched too.
   js-yaml@4: ^4.3.1
-  # nanoid predictable-ID weakness in the 3.x line (GHSA-2v37-7h3g-55p8):
-  # patched in 3.3.17. Same-major bump, so force it. Reached via
-  # vite > postcss, build-time only.
-  nanoid@3: ^3.3.17
+  # nanoid GHSA-2v37-7h3g-55p8 (advisory widened: custom generators can loop
+  # indefinitely when size is zero): patched in 3.3.18. Same-major bump, so
+  # force it. Reached via vite > postcss, build-time only.
+  nanoid@3: ^3.3.18
 
 auditConfig:
   # GHSA-mh99-v99m-4gvg (brace-expansion DoS). The advisory range `<=5.0.7`
