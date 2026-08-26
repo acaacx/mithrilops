@@ -11,7 +11,27 @@
    ```
 2. Create the Entra app/identity for GitHub OIDC or let `modules/identity` manage the federated credential, then set repository **variables** (not secrets): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
 3. Configure GitHub environments `development` and `production`; add **required reviewers** on `production` — this is the human approval gate.
-4. Set real values in `infrastructure/environments/<env>/terraform.tfvars` (tenant id, alert email, repo). No secrets go in tfvars.
+4. Set `tenant_id` in `infrastructure/environments/<env>/terraform.tfvars` — it
+   is the last placeholder (`00000000-…`) and the only value that must be filled
+   in per tenant. `az account show --query tenantId -o tsv`. No secrets go in
+   tfvars.
+
+`github_repository` and `api_image` are already set to real values and normally
+need no edit:
+
+- **`github_repository`** (`acaacx/mithrilops`) is not cosmetic. It becomes the
+  federated-credential subject in `modules/identity`
+  (`repo:<github_repository>:environment:<github_environment>`), so a wrong
+  value makes every GitHub OIDC login fail with no obvious cause. Change it only
+  when the repository itself moves.
+- **`api_image`** pins a digest, not a tag, and only seeds the **first**
+  `terraform apply` — thereafter CI rolls images forward with
+  `az containerapp update --image`, so the tfvars digest goes stale by design
+  and is not worth chasing. Bump it only to change what a fresh environment
+  starts on. Get the current digest from a green `main` run's build job, or:
+  ```bash
+  docker buildx imagetools inspect ghcr.io/acaacx/mithrilops/secureflow-api:<sha>
+  ```
 
 ## Per-environment rollout
 
